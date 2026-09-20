@@ -24,7 +24,9 @@ export const ALLOWED_DOC_TYPES = [
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
-export const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
+export const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+export const MAX_GALLERY_IMAGES = 10;
+export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif";
 export const MAX_DOC_SIZE = 15 * 1024 * 1024;
 
 export function isAllowedImage(file: File) {

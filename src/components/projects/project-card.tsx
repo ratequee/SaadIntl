@@ -1,6 +1,6 @@
-import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { IconArrowUpRight } from "@/components/ui/icons";
+import { MediaImage } from "@/components/ui/media-image";
 import { localized } from "@/lib/utils";
 import type { Category, Project } from "@/lib/types";
 
@@ -17,11 +17,12 @@ export function ProjectCard({
     <Link href={`/projects/${project.slug}`} className="group block">
       <article>
         <div className="relative overflow-hidden rounded-[1.8rem]">
-          <Image
+          <MediaImage
             src={project.featuredImageUrl}
             alt={localized(project.title, locale)}
             width={800}
             height={560}
+            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="h-64 w-full object-cover transition duration-500 group-hover:scale-[1.02]"
           />
           <span className="absolute end-4 bottom-4 grid size-10 place-items-center rounded-full bg-white text-ink">

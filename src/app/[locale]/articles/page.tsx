@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MediaImage } from "@/components/ui/media-image";
 import { getArticles, getCategories } from "@/lib/cms";
 import { formatDate, localized } from "@/lib/utils";
 
@@ -62,11 +62,12 @@ export default async function ArticlesPage({
               <Link key={article.id} href={`/articles/${article.slug}`} className="group">
                 <article>
                   <div className="overflow-hidden rounded-[1.8rem]">
-                    <Image
+                    <MediaImage
                       src={article.featuredImageUrl}
                       alt={localized(article.title, locale)}
                       width={720}
                       height={480}
+                      sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
                       className="h-56 w-full object-cover transition duration-500 group-hover:scale-[1.02]"
                     />
                   </div>

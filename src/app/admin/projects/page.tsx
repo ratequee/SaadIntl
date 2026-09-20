@@ -3,6 +3,7 @@ import { deleteProjectAction } from "@/app/admin/actions";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { getProjects } from "@/lib/cms";
 import { buttonClass, goldHoverClass } from "@/components/ui/button";
+import { MediaImage } from "@/components/ui/media-image";
 
 const PAGE_SIZE = 8;
 
@@ -45,6 +46,7 @@ export default async function AdminProjectsPage({
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-border text-muted">
+              <th className="px-4 py-3 text-start font-medium">Image</th>
               <th className="px-4 py-3 text-start font-medium">Title</th>
               <th className="px-4 py-3 text-start font-medium">Status</th>
               <th className="px-4 py-3 text-start font-medium">Visibility</th>
@@ -55,13 +57,29 @@ export default async function AdminProjectsPage({
           <tbody>
             {projects.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-start text-muted">
+                <td colSpan={6} className="px-4 py-8 text-start text-muted">
                   No projects match this search.
                 </td>
               </tr>
             ) : (
               projects.map((project) => (
                 <tr key={project.id} className="border-b border-border last:border-0">
+                  <td className="px-4 py-4 text-start align-top">
+                    {project.featuredImageUrl ? (
+                      <MediaImage
+                        src={project.featuredImageUrl}
+                        alt=""
+                        width={80}
+                        height={56}
+                        sizes="80px"
+                        className="h-14 w-20 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <span className="grid h-14 w-20 place-items-center rounded-lg bg-surface text-xs text-muted">
+                        —
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-4 text-start align-top">
                     <p className="font-medium">{project.title.en}</p>
                     <p className="text-muted" dir="rtl">{project.title.ar}</p>
@@ -79,7 +97,12 @@ export default async function AdminProjectsPage({
                       <Link href={`/en/projects/${project.slug}`} className="text-muted" target="_blank">
                         Preview
                       </Link>
-                      <ConfirmDelete action={deleteProjectAction} id={project.id} />
+                      <ConfirmDelete
+                        action={deleteProjectAction}
+                        id={project.id}
+                        name={project.title.en}
+                        kind="project"
+                      />
                     </div>
                   </td>
                 </tr>

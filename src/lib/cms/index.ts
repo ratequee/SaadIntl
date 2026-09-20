@@ -3,6 +3,7 @@ import { seedStore } from "@/lib/data/seed";
 import { mutateStore, readStore } from "./file-store";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { deleteUpload } from "@/lib/uploads";
 import {
   deleteRemoteArticle,
   deleteRemoteDocument,
@@ -204,6 +205,14 @@ export async function saveProject(input: ProjectInput, id?: string) {
 }
 
 export async function deleteProject(id: string) {
+  const project = await getProjectById(id);
+  if (project) {
+    const urls = [
+      project.featuredImageUrl,
+      ...project.images.map((image) => image.url),
+    ].filter((url, index, list) => url && list.indexOf(url) === index);
+    await Promise.all(urls.map((url) => deleteUpload(url)));
+  }
   await mutateStore((store) => {
     store.projects = store.projects.filter((item) => item.id !== id);
   });

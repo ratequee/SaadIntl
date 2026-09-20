@@ -8,6 +8,8 @@ export function Field({
   dir,
   required,
   type = "text",
+  min,
+  max,
 }: {
   label: string;
   name: string;
@@ -16,6 +18,8 @@ export function Field({
   dir?: string;
   required?: boolean;
   type?: string;
+  min?: number;
+  max?: number;
 }) {
   const className = cn(
     "w-full border border-border bg-background px-4 py-3 text-sm",
@@ -23,7 +27,10 @@ export function Field({
   );
   return (
     <label className="grid gap-2 text-sm">
-      <span className="font-medium">{label}</span>
+      <span className="font-medium">
+        {label}
+        {required ? <span className="text-gold"> *</span> : null}
+      </span>
       {textarea ? (
         <textarea name={name} defaultValue={defaultValue ?? ""} required={required} dir={dir} className={className} />
       ) : (
@@ -33,6 +40,8 @@ export function Field({
           defaultValue={defaultValue ?? ""}
           required={required}
           dir={dir}
+          min={min}
+          max={max}
           className={className}
         />
       )}

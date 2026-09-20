@@ -15,7 +15,10 @@ export function TitleSlugFields({
 
   return (
     <label className="grid gap-2 text-sm">
-      <span className="font-medium">Title (English)</span>
+      <span className="font-medium">
+        Title (English)
+        <span className="text-gold"> *</span>
+      </span>
       <input
         name="title_en"
         value={title}
@@ -24,7 +27,6 @@ export function TitleSlugFields({
         className="w-full rounded-full border border-border bg-background px-4 py-3 text-sm"
       />
       <input type="hidden" name="slug" value={slug} />
-      <span className="text-xs text-muted">Slug: {slug || "generated from the English title"}</span>
     </label>
   );
 }

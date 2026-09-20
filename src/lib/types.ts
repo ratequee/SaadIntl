@@ -39,7 +39,6 @@ export type Project = {
   startDate: string | null;
   completionDate: string | null;
   contractValue: string;
-  scope: Localized;
   services: string[];
   featuredImageUrl: string;
   progress: number | null;

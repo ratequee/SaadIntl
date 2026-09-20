@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import { MediaImage } from "@/components/ui/media-image";
 import { localized } from "@/lib/utils";
 import type { ProjectImage } from "@/lib/types";
 
@@ -19,11 +19,12 @@ export function ProjectGallery({
   return (
     <div>
       <div className="overflow-hidden rounded-[2rem]">
-        <Image
+        <MediaImage
           src={active.url}
           alt={localized(active.alt, locale) || localized(active.caption, locale)}
           width={1400}
           height={800}
+          sizes="(min-width: 1441px) 80vw, 100vw"
           className="h-[52vw] max-h-[620px] min-h-[280px] w-full object-cover"
           priority
         />
@@ -42,7 +43,7 @@ export function ProjectGallery({
                 image.id === active.id ? "ring-2 ring-gold" : ""
               }`}
             >
-              <Image src={image.url} alt="" fill className="object-cover" sizes="112px" />
+              <MediaImage src={image.url} alt="" fill className="object-cover" sizes="112px" />
             </button>
           ))}
         </div>

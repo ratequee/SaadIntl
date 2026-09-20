@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { MediaImage } from "@/components/ui/media-image";
 import { Link } from "@/i18n/navigation";
 import { buttonClass } from "@/components/ui/button";
 import { IconArrowUpRight } from "@/components/ui/icons";
@@ -90,11 +90,12 @@ export function FeaturedProjects({
           >
             <article>
               <div className="relative overflow-hidden rounded-[1.8rem]">
-                <Image
+                <MediaImage
                   src={project.featuredImageUrl}
                   alt={localized(project.title, locale)}
                   width={720}
                   height={520}
+                  sizes="(min-width: 768px) 360px, 78vw"
                   className="h-64 w-full object-cover"
                 />
                 <span className="absolute end-4 top-4 grid size-10 place-items-center rounded-full bg-white text-ink">

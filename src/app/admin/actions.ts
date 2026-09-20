@@ -14,6 +14,7 @@ import {
 } from "@/lib/cms";
 import { readingTime, slugify } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { MAX_GALLERY_IMAGES } from "@/lib/validations";
 import type { ArticleInput, DocumentInput, ProjectInput, SiteSettings } from "@/lib/types";
 
 async function requireAdmin() {
@@ -32,7 +33,34 @@ function bool(form: FormData, key: string) {
 export async function upsertProjectAction(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id") || undefined;
-  const images = JSON.parse(text(formData, "images") || "[]") as ProjectInput["images"];
+  const images = (JSON.parse(text(formData, "images") || "[]") as ProjectInput["images"]) || [];
+  const required = [
+    "title_en",
+    "title_ar",
+    "categoryId",
+    "location_en",
+    "location_ar",
+    "client",
+    "status",
+    "startDate",
+    "completionDate",
+    "progress",
+    "displayOrder",
+    "services",
+    "contractValue",
+    "excerpt_en",
+    "excerpt_ar",
+    "description_en",
+    "description_ar",
+    "featuredImageUrl",
+    "seo_title_en",
+    "seo_title_ar",
+    "seo_description_en",
+    "seo_description_ar",
+  ];
+  if (required.some((key) => !text(formData, key)) || !images.length || images.length > MAX_GALLERY_IMAGES) {
+    throw new Error("All project fields are required, with 1 to 10 gallery images.");
+  }
   const payload: ProjectInput = {
     slug: text(formData, "slug") || slugify(text(formData, "title_en")),
     title: { en: text(formData, "title_en"), ar: text(formData, "title_ar") },
@@ -48,7 +76,6 @@ export async function upsertProjectAction(formData: FormData) {
     startDate: text(formData, "startDate") || null,
     completionDate: text(formData, "completionDate") || null,
     contractValue: text(formData, "contractValue"),
-    scope: { en: text(formData, "scope_en"), ar: text(formData, "scope_ar") },
     services: text(formData, "services")
       .split(",")
       .map((item) => item.trim())

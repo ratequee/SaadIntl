@@ -31,8 +31,6 @@ create table if not exists public.projects (
   start_date date,
   completion_date date,
   contract_value text not null default '',
-  scope_en text not null default '',
-  scope_ar text not null default '',
   services text[] not null default '{}',
   featured_image_url text not null default '',
   progress int,

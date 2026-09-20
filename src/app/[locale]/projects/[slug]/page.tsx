@@ -91,12 +91,6 @@ export default async function ProjectDetailPage({
                 <dd>{formatDate(project.completionDate, locale)}</dd>
               </div>
             ) : null}
-            {localized(project.scope, locale) ? (
-              <div>
-                <dt className="text-muted">{t("scope")}</dt>
-                <dd className="mt-1">{localized(project.scope, locale)}</dd>
-              </div>
-            ) : null}
           </dl>
         </aside>
       </div>

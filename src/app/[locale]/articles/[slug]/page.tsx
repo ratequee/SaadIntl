@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
+import { MediaImage } from "@/components/ui/media-image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getAdminSession } from "@/lib/auth/session";
@@ -54,11 +54,12 @@ export default async function ArticleDetailPage({
         {formatDate(article.publishedAt, locale)} · {localized(article.author, locale)} ·{" "}
         {t("minRead", { minutes: article.readingTimeMinutes })}
       </p>
-      <Image
+      <MediaImage
         src={article.featuredImageUrl}
         alt={localized(article.title, locale)}
         width={1400}
         height={800}
+        sizes="(min-width: 1441px) 80vw, 100vw"
         className="mt-8 h-[48vw] max-h-[520px] min-h-[240px] w-full rounded-[2rem] object-cover"
         priority
       />

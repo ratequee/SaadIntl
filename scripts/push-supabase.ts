@@ -115,8 +115,6 @@ async function seed() {
     start_date: item.startDate,
     completion_date: item.completionDate,
     contract_value: item.contractValue,
-    scope_en: item.scope.en,
-    scope_ar: item.scope.ar,
     services: item.services,
     featured_image_url: item.featuredImageUrl,
     progress: item.progress,
