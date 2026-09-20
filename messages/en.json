@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "homeTitle": "SAAD International Projects | Design, build and interiors in Qatar",
+    "homeDescription": "SAAD International Projects W.L.L. manages, builds and fits out homes and commercial spaces across Qatar."
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "projects": "Projects",
+    "services": "Services",
+    "articles": "Blogs",
+    "documents": "Documents",
+    "contact": "Contact",
+    "startProject": "Start a project",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language",
+    "theme": "Theme"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "hero": {
+    "title": "From design to delivery, built right.",
+    "subtitle": "SAAD International Projects manages, builds and fits out homes and commercial spaces across Qatar.",
+    "ctaPrimary": "Start a project",
+    "ctaSecondary": "See our work",
+    "ongoing": "Ongoing projects"
+  },
+  "ticker": {
+    "projectManagement": "Project Management",
+    "interiorDesign": "Interior Design",
+    "procurement": "Procurement",
+    "maintenance": "Maintenance Services",
+    "construction": "Construction",
+    "design": "Design"
+  },
+  "about": {
+    "title": "Building excellence, creating lasting value",
+    "lead": "Every successful project begins with a clear vision and ends with exceptional execution.",
+    "body1": "Through integrated project management, construction and premium interior design, SAAD International Projects W.L.L. delivers work that balances quality, precision and efficiency.",
+    "body2": "We aim to create inspiring environments that exceed expectations, and to build long-term relationships based on trust and professionalism.",
+    "cta": "What we do",
+    "statProjects": "50+",
+    "statProjectsLabel": "Active projects nationwide",
+    "statSatisfaction": "99.5%",
+    "statSatisfactionLabel": "Client satisfaction, built on trust",
+    "imageAlt": "SAAD reception lobby"
+  },
+  "services": {
+    "title": "Every stage of the build, under one roof",
+    "lead": "One accountable team from first sketch to final handover, so nothing gets lost between designer and contractor.",
+    "ask": "Ask about this",
+    "contracting": {
+      "title": "General contracting",
+      "body": "Full site delivery for residential and commercial buildings, on programme and to specification."
+    },
+    "designBuild": {
+      "title": "Design & build",
+      "body": "Architecture, engineering and construction in one contract, with a single point of responsibility."
+    },
+    "projectManagement": {
+      "title": "Project management",
+      "body": "Schedules, budgets, procurement and quality control handled for you, with clear progress reporting."
+    },
+    "interiorDesign": {
+      "title": "Interior design",
+      "body": "Premium interiors and finishes, planned with the build so the details land as designed."
+    }
+  },
+  "projects": {
+    "title": "Quality you can walk through",
+    "pageTitle": "Projects",
+    "pageLead": "Homes, workplaces and interiors delivered across Qatar.",
+    "empty": "Projects will be displayed here once published.",
+    "all": "All",
+    "search": "Search projects",
+    "status": "Status",
+    "location": "Location",
+    "client": "Client",
+    "scope": "Scope",
+    "gallery": "Gallery",
+    "facts": "Project facts",
+    "related": "More work",
+    "planning": "Planning",
+    "in_progress": "In progress",
+    "completed": "Completed",
+    "featured": "Featured",
+    "view": "View project",
+    "notFound": "This project is not available."
+  },
+  "process": {
+    "title": "How we work",
+    "lead": "A simple four-step process, with one team accountable at every stage.",
+    "cta": "Book a consultation",
+    "imageAlt": "Site team reviewing drawings",
+    "steps": {
+      "1": {
+        "title": "Brief and site visit",
+        "body": "We listen, walk the site and agree the scope, budget and timeline with you."
+      },
+      "2": {
+        "title": "Design and pricing",
+        "body": "Drawings, specifications and a fixed cost plan you can review before anything starts."
+      },
+      "3": {
+        "title": "Build and manage",
+        "body": "Our site teams deliver to programme, with regular progress reports and quality checks."
+      },
+      "4": {
+        "title": "Handover and care",
+        "body": "Final inspection, documentation and support after you move in."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "What our clients say",
+    "customers": "50+ happy customers",
+    "imageAlt": "Design tools and drawings"
+  },
+  "articles": {
+    "homeTitle": "Notes from site",
+    "pageTitle": "Notes from site",
+    "pageLead": "Short pieces from the studio and the site.",
+    "empty": "No articles available.",
+    "search": "Search articles",
+    "minRead": "{minutes} min read",
+    "related": "Related notes",
+    "share": "Share",
+    "notFound": "This article is not available."
+  },
+  "documents": {
+    "title": "Documents",
+    "lead": "Company credentials for tenders and due diligence.",
+    "empty": "Documents will be displayed here once published.",
+    "download": "Download",
+    "pdf": "PDF",
+    "pageLead": "Profiles, policies and licences you can share with your team."
+  },
+  "contact": {
+    "title": "Let’s talk about your project",
+    "lead": "Tell us what you’re planning. We’ll reply within one working day.",
+    "email": "Email",
+    "phone": "Phone",
+    "name": "Full name",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "you@company.com",
+    "phonePlaceholder": "+974",
+    "subject": "What do you need?",
+    "subjectPlaceholder": "General contracting",
+    "message": "Project details",
+    "messagePlaceholder": "Location, size, timeline, budget range",
+    "submit": "Send enquiry",
+    "sending": "Sending…",
+    "note": "Your enquiry is stored securely. We reply from info@sipqa.com.",
+    "success": "Thank you. We have received your enquiry.",
+    "error": "We could not send the enquiry. Please try again or email us directly.",
+    "rateLimit": "Please wait before sending another enquiry.",
+    "pageTitle": "Contact",
+    "pageLead": "Start a conversation about your next project in Qatar."
+  },
+  "footer": {
+    "blurb": "Project management, construction and interior design across Qatar.",
+    "company": "Company",
+    "services": "Services",
+    "getInTouch": "Get in touch",
+    "rights": "© {year} SAAD International Projects. All rights reserved.",
+    "howWeWork": "How we work"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "retry": "Try again",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "readMore": "Read more"
+  },
+  "admin": {
+    "loginTitle": "Admin sign in",
+    "loginLead": "Manage projects, articles and documents.",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "invalid": "Email or password is incorrect.",
+    "missing": "Enter your email and password.",
+    "signOut": "Sign out",
+    "dashboard": "Dashboard",
+    "overview": "Overview of published and draft content.",
+    "projects": "Projects",
+    "articles": "Articles",
+    "documents": "Documents",
+    "settings": "Settings",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving…",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "draft": "Draft",
+    "published": "Published",
+    "preview": "Preview",
+    "english": "English",
+    "arabic": "Arabic",
+    "confirmDelete": "Delete this item? This cannot be undone.",
+    "cancel": "Cancel",
+    "empty": "Nothing here yet.",
+    "saved": "Saved.",
+    "titleEn": "Title (English)",
+    "titleAr": "Title (Arabic)",
+    "slug": "Slug",
+    "excerptEn": "Short description (English)",
+    "excerptAr": "Short description (Arabic)",
+    "bodyEn": "Content (English)",
+    "bodyAr": "Content (Arabic)",
+    "category": "Category",
+    "featuredImage": "Featured image",
+    "gallery": "Gallery",
+    "upload": "Upload",
+    "replace": "Replace file",
+    "seoEn": "SEO title (English)",
+    "seoAr": "SEO title (Arabic)",
+    "seoDescEn": "SEO description (English)",
+    "seoDescAr": "SEO description (Arabic)",
+    "recentProjects": "Recent projects",
+    "recentArticles": "Recent articles",
+    "totalProjects": "Total projects",
+    "publishedProjects": "Published projects",
+    "draftProjects": "Draft projects",
+    "totalArticles": "Total articles",
+    "publishedArticles": "Published articles",
+    "totalDocuments": "Total documents"
+  }
+}

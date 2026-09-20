@@ -1,0 +1,148 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { getAdminSession } from "@/lib/auth/session";
+import {
+  deleteArticle,
+  deleteDocument,
+  deleteProject,
+  saveArticle,
+  saveDocument,
+  saveProject,
+  updateSettings,
+} from "@/lib/cms";
+import { readingTime, slugify } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
+import type { ArticleInput, DocumentInput, ProjectInput, SiteSettings } from "@/lib/types";
+
+async function requireAdmin() {
+  const session = await getAdminSession();
+  if (!session) redirect("/admin/login");
+}
+
+function text(form: FormData, key: string) {
+  return String(form.get(key) || "").trim();
+}
+
+function bool(form: FormData, key: string) {
+  return form.get(key) === "on" || form.get(key) === "true";
+}
+
+export async function upsertProjectAction(formData: FormData) {
+  await requireAdmin();
+  const id = text(formData, "id") || undefined;
+  const images = JSON.parse(text(formData, "images") || "[]") as ProjectInput["images"];
+  const payload: ProjectInput = {
+    slug: text(formData, "slug") || slugify(text(formData, "title_en")),
+    title: { en: text(formData, "title_en"), ar: text(formData, "title_ar") },
+    excerpt: { en: text(formData, "excerpt_en"), ar: text(formData, "excerpt_ar") },
+    description: {
+      en: sanitizeHtml(text(formData, "description_en")),
+      ar: sanitizeHtml(text(formData, "description_ar")),
+    },
+    categoryId: text(formData, "categoryId"),
+    location: { en: text(formData, "location_en"), ar: text(formData, "location_ar") },
+    client: text(formData, "client"),
+    status: (text(formData, "status") || "planning") as ProjectInput["status"],
+    startDate: text(formData, "startDate") || null,
+    completionDate: text(formData, "completionDate") || null,
+    contractValue: text(formData, "contractValue"),
+    scope: { en: text(formData, "scope_en"), ar: text(formData, "scope_ar") },
+    services: text(formData, "services")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+    featuredImageUrl: text(formData, "featuredImageUrl"),
+    progress: text(formData, "progress") ? Number(text(formData, "progress")) : null,
+    isPublished: bool(formData, "isPublished"),
+    isFeatured: bool(formData, "isFeatured"),
+    displayOrder: Number(text(formData, "displayOrder") || 99),
+    seoTitle: { en: text(formData, "seo_title_en"), ar: text(formData, "seo_title_ar") },
+    seoDescription: { en: text(formData, "seo_description_en"), ar: text(formData, "seo_description_ar") },
+    publishedAt: bool(formData, "isPublished") ? new Date().toISOString() : null,
+    images,
+  };
+  await saveProject(payload, id);
+  redirect("/admin/projects");
+}
+
+export async function deleteProjectAction(formData: FormData) {
+  await requireAdmin();
+  await deleteProject(text(formData, "id"));
+  revalidatePath("/admin/projects");
+}
+
+export async function upsertArticleAction(formData: FormData) {
+  await requireAdmin();
+  const id = text(formData, "id") || undefined;
+  const content = {
+    en: sanitizeHtml(text(formData, "content_en")),
+    ar: sanitizeHtml(text(formData, "content_ar")),
+  };
+  const payload: ArticleInput = {
+    slug: text(formData, "slug"),
+    title: { en: text(formData, "title_en"), ar: text(formData, "title_ar") },
+    excerpt: { en: text(formData, "excerpt_en"), ar: text(formData, "excerpt_ar") },
+    content,
+    categoryId: text(formData, "categoryId"),
+    featuredImageUrl: text(formData, "featuredImageUrl"),
+    author: { en: text(formData, "author_en"), ar: text(formData, "author_ar") },
+    readingTimeMinutes: readingTime(`${content.en} ${content.ar}`),
+    isPublished: bool(formData, "isPublished"),
+    publishedAt: text(formData, "publishedAt") || (bool(formData, "isPublished") ? new Date().toISOString() : null),
+    seoTitle: { en: text(formData, "seo_title_en"), ar: text(formData, "seo_title_ar") },
+    seoDescription: { en: text(formData, "seo_description_en"), ar: text(formData, "seo_description_ar") },
+  };
+  await saveArticle(payload, id);
+  redirect("/admin/articles");
+}
+
+export async function deleteArticleAction(formData: FormData) {
+  await requireAdmin();
+  await deleteArticle(text(formData, "id"));
+  revalidatePath("/admin/articles");
+}
+
+export async function upsertDocumentAction(formData: FormData) {
+  await requireAdmin();
+  const id = text(formData, "id") || undefined;
+  const payload: DocumentInput = {
+    slug: text(formData, "slug"),
+    title: { en: text(formData, "title_en"), ar: text(formData, "title_ar") },
+    description: { en: text(formData, "description_en"), ar: text(formData, "description_ar") },
+    categoryId: text(formData, "categoryId"),
+    fileUrl: text(formData, "fileUrl"),
+    fileName: text(formData, "fileName"),
+    fileType: text(formData, "fileType") || "application/pdf",
+    fileSize: Number(text(formData, "fileSize") || 0),
+    thumbnailUrl: text(formData, "thumbnailUrl"),
+    isPublished: bool(formData, "isPublished"),
+    displayOrder: Number(text(formData, "displayOrder") || 99),
+    publishedAt: bool(formData, "isPublished") ? new Date().toISOString() : null,
+  };
+  await saveDocument(payload, id);
+  redirect("/admin/documents");
+}
+
+export async function deleteDocumentAction(formData: FormData) {
+  await requireAdmin();
+  await deleteDocument(text(formData, "id"));
+  revalidatePath("/admin/documents");
+}
+
+export async function updateSettingsAction(formData: FormData) {
+  await requireAdmin();
+  const settings: SiteSettings = {
+    companyName: { en: text(formData, "company_en"), ar: text(formData, "company_ar") },
+    tagline: { en: text(formData, "tagline_en"), ar: text(formData, "tagline_ar") },
+    about: { en: text(formData, "about_en"), ar: text(formData, "about_ar") },
+    email: text(formData, "email"),
+    phone: text(formData, "phone"),
+    hours: { en: text(formData, "hours_en"), ar: text(formData, "hours_ar") },
+    address: { en: text(formData, "address_en"), ar: text(formData, "address_ar") },
+    mapEmbedUrl: text(formData, "mapEmbedUrl"),
+  };
+  await updateSettings(settings);
+  revalidatePath("/admin/settings");
+}
