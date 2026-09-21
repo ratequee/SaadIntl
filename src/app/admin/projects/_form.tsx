@@ -7,6 +7,7 @@ import { FileField } from "@/components/admin/file-field";
 import { GalleryField, type GalleryItem } from "@/components/admin/gallery-field";
 import { TitleSlugFields } from "@/components/admin/title-slug-fields";
 import { buttonClass, goldHoverClass } from "@/components/ui/button";
+import { pushAdminToast, reportAdminForm } from "@/components/admin/admin-toast";
 import type { Category, Project } from "@/lib/types";
 
 async function uploadImage(file: File) {
@@ -43,25 +44,25 @@ export function ProjectForm({
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
-    if (!featuredFile && !project?.featuredImageUrl) {
-      setError("Add a featured image.");
+    if (!reportAdminForm(form)) return;
+
+    const data = new FormData(form);
+    const existingImage = String(data.get("featuredImageUrl") || "");
+    if (!featuredFile && !existingImage) {
+      pushAdminToast("Featured image is required.", "error");
       return;
     }
     if (!gallery.length) {
-      setError("Add at least one gallery image.");
+      pushAdminToast("Gallery is required.", "error");
       return;
     }
 
     setSaving(true);
     setError("");
     try {
-      const featuredImageUrl = featuredFile
-        ? await uploadImage(featuredFile)
-        : project?.featuredImageUrl || "";
+      if (featuredFile) {
+        data.set("featuredImageUrl", await uploadImage(featuredFile));
+      }
       const images = [];
       for (const item of gallery) {
         const url = item.file ? await uploadImage(item.file) : item.url;
@@ -74,13 +75,20 @@ export function ProjectForm({
           displayOrder: item.displayOrder,
         });
       }
-
-      const data = new FormData(form);
-      data.set("featuredImageUrl", featuredImageUrl);
       data.set("images", JSON.stringify(images));
       await upsertProjectAction(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save the project.");
+      if (
+        typeof err === "object" &&
+        err &&
+        "digest" in err &&
+        String((err as { digest?: string }).digest).startsWith("NEXT_REDIRECT")
+      ) {
+        throw err;
+      }
+      const message = err instanceof Error ? err.message : "Could not save the project.";
+      setError(message);
+      pushAdminToast(message, "error");
       setSaving(false);
     }
   }
@@ -175,7 +183,11 @@ export function ProjectForm({
       </label>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
       <button type="submit" disabled={saving} className={buttonClass("dark", goldHoverClass)}>
-        {saving ? "Saving and uploading…" : "Save project"}
+        {saving
+          ? featuredFile || gallery.some((item) => item.file)
+            ? "Saving and uploading…"
+            : "Saving…"
+          : "Save project"}
       </button>
     </form>
   );

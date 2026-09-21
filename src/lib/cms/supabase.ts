@@ -1,4 +1,5 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { parseDate } from "@/lib/utils";
 import type {
   Article,
   ArticleInput,
@@ -11,6 +12,11 @@ import type {
   SiteSettings,
   Testimonial,
 } from "@/lib/types";
+
+function toIso(value: unknown) {
+  const date = parseDate(value as string | Date | null | undefined);
+  return date ? date.toISOString() : null;
+}
 
 export function remoteCms() {
   return getSupabaseServer();
@@ -85,7 +91,7 @@ export function mapArticle(row: Record<string, unknown>): Article {
     author: loc(row.author_en as string, row.author_ar as string),
     readingTimeMinutes: Number(row.reading_time_minutes || 3),
     isPublished: Boolean(row.is_published),
-    publishedAt: (row.published_at as string) || null,
+    publishedAt: toIso(row.published_at),
     seoTitle: loc(row.seo_title_en as string, row.seo_title_ar as string),
     seoDescription: loc(row.seo_description_en as string, row.seo_description_ar as string),
     createdAt: String(row.created_at || ""),

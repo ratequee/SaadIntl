@@ -50,7 +50,7 @@ export function FileField({
 
     if (deferUpload) {
       onPendingFile?.(file);
-      setUrl(url || "pending");
+      setUrl((current) => current || "pending");
       event.target.value = "";
       return;
     }
@@ -103,7 +103,7 @@ export function FileField({
         type="text"
         name={name}
         value={url === "pending" ? "" : url}
-        required={required && !preview}
+        required={Boolean(required && !preview && (url === "pending" || !url))}
         readOnly
         tabIndex={-1}
         className="sr-only"
@@ -123,7 +123,11 @@ export function FileField({
           <img src={preview} alt="" className="h-48 w-full object-cover" />
           <div className="flex items-center justify-between gap-3 px-4 py-3">
             <p className="truncate text-xs text-muted">
-              {uploading ? "Uploading…" : deferUpload ? "Selected · uploads on save" : "Featured image ready"}
+              {uploading
+                ? "Uploading…"
+                : deferUpload && preview.startsWith("blob:")
+                  ? "Selected · uploads on save"
+                  : "Featured image ready"}
             </p>
             <button
               type="button"

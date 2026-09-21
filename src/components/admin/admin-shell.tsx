@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/auth/actions";
 import { Logo } from "@/components/ui/logo";
+import { AdminToast } from "@/components/admin/admin-toast";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -25,6 +26,7 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-surface">
+      <AdminToast />
       <aside className="fixed inset-y-0 start-0 z-20 hidden w-64 border-e border-border bg-background p-5 md:block">
         <Logo />
         <p className="mt-6 text-xs uppercase tracking-wide text-muted">Admin</p>

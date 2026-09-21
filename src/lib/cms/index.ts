@@ -268,25 +268,32 @@ export async function saveArticle(input: ArticleInput, id?: string) {
     const timestamp = nowIso();
     if (id) {
       const index = store.articles.findIndex((item) => item.id === id);
-      if (index === -1) throw new Error("Article not found");
-      const current = store.articles[index];
+      const current = index === -1
+        ? {
+            ...input,
+            id,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            publishedAt: input.publishedAt,
+          }
+        : store.articles[index];
       saved = {
         ...current,
         ...input,
         id,
+        createdAt: current.createdAt,
         updatedAt: timestamp,
-        publishedAt: input.isPublished
-          ? input.publishedAt || current.publishedAt || timestamp
-          : null,
+        publishedAt: input.publishedAt,
       };
-      store.articles[index] = saved;
+      if (index === -1) store.articles.push(saved);
+      else store.articles[index] = saved;
     } else {
       saved = {
         ...input,
         id: newId("art"),
         createdAt: timestamp,
         updatedAt: timestamp,
-        publishedAt: input.isPublished ? input.publishedAt || timestamp : null,
+        publishedAt: input.publishedAt || (input.isPublished ? timestamp : null),
       };
       store.articles.push(saved);
     }

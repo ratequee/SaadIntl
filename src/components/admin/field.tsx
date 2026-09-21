@@ -23,7 +23,7 @@ export function Field({
 }) {
   const className = cn(
     "w-full border border-border bg-background px-4 py-3 text-sm",
-    textarea ? "min-h-36 rounded-[1.2rem]" : "rounded-full",
+    textarea ? "min-h-36 rounded-[1.2rem]" : type === "date" || type === "datetime-local" ? "rounded-[1.2rem]" : "rounded-full",
   );
   return (
     <label className="grid gap-2 text-sm">

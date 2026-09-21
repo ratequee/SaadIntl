@@ -30,7 +30,7 @@ export async function loginAction(_: { error?: string } | null, formData: FormDa
   if (!ok) return { error: "invalid" };
 
   await createAdminSession(email);
-  redirect("/admin");
+  redirect("/admin?notice=signed-in");
 }
 
 export async function logoutAction() {

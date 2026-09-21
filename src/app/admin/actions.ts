@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { noticePath } from "@/lib/admin-notice";
 import { getAdminSession } from "@/lib/auth/session";
 import {
   deleteArticle,
@@ -12,7 +12,7 @@ import {
   saveProject,
   updateSettings,
 } from "@/lib/cms";
-import { readingTime, slugify } from "@/lib/utils";
+import { fromDateInput, readingTime, slugify } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { MAX_GALLERY_IMAGES } from "@/lib/validations";
 import type { ArticleInput, DocumentInput, ProjectInput, SiteSettings } from "@/lib/types";
@@ -91,13 +91,13 @@ export async function upsertProjectAction(formData: FormData) {
     images,
   };
   await saveProject(payload, id);
-  redirect("/admin/projects");
+  redirect(noticePath("/admin/projects", id ? "project-updated" : "project-saved"));
 }
 
 export async function deleteProjectAction(formData: FormData) {
   await requireAdmin();
   await deleteProject(text(formData, "id"));
-  revalidatePath("/admin/projects");
+  redirect(noticePath("/admin/projects", "project-deleted"));
 }
 
 export async function upsertArticleAction(formData: FormData) {
@@ -108,7 +108,7 @@ export async function upsertArticleAction(formData: FormData) {
     ar: sanitizeHtml(text(formData, "content_ar")),
   };
   const payload: ArticleInput = {
-    slug: text(formData, "slug"),
+    slug: text(formData, "slug") || slugify(text(formData, "title_en")),
     title: { en: text(formData, "title_en"), ar: text(formData, "title_ar") },
     excerpt: { en: text(formData, "excerpt_en"), ar: text(formData, "excerpt_ar") },
     content,
@@ -117,18 +117,22 @@ export async function upsertArticleAction(formData: FormData) {
     author: { en: text(formData, "author_en"), ar: text(formData, "author_ar") },
     readingTimeMinutes: readingTime(`${content.en} ${content.ar}`),
     isPublished: bool(formData, "isPublished"),
-    publishedAt: text(formData, "publishedAt") || (bool(formData, "isPublished") ? new Date().toISOString() : null),
+    publishedAt: (() => {
+      const date = fromDateInput(text(formData, "publishedAt"));
+      if (date) return date.toISOString();
+      return bool(formData, "isPublished") ? new Date().toISOString() : null;
+    })(),
     seoTitle: { en: text(formData, "seo_title_en"), ar: text(formData, "seo_title_ar") },
     seoDescription: { en: text(formData, "seo_description_en"), ar: text(formData, "seo_description_ar") },
   };
   await saveArticle(payload, id);
-  redirect("/admin/articles");
+  redirect(noticePath("/admin/articles", id ? "article-updated" : "article-saved"));
 }
 
 export async function deleteArticleAction(formData: FormData) {
   await requireAdmin();
   await deleteArticle(text(formData, "id"));
-  revalidatePath("/admin/articles");
+  redirect(noticePath("/admin/articles", "article-deleted"));
 }
 
 export async function upsertDocumentAction(formData: FormData) {
@@ -149,13 +153,13 @@ export async function upsertDocumentAction(formData: FormData) {
     publishedAt: bool(formData, "isPublished") ? new Date().toISOString() : null,
   };
   await saveDocument(payload, id);
-  redirect("/admin/documents");
+  redirect(noticePath("/admin/documents", id ? "document-updated" : "document-saved"));
 }
 
 export async function deleteDocumentAction(formData: FormData) {
   await requireAdmin();
   await deleteDocument(text(formData, "id"));
-  revalidatePath("/admin/documents");
+  redirect(noticePath("/admin/documents", "document-deleted"));
 }
 
 export async function updateSettingsAction(formData: FormData) {
@@ -171,5 +175,5 @@ export async function updateSettingsAction(formData: FormData) {
     mapEmbedUrl: text(formData, "mapEmbedUrl"),
   };
   await updateSettings(settings);
-  revalidatePath("/admin/settings");
+  redirect(noticePath("/admin/settings", "settings-saved"));
 }

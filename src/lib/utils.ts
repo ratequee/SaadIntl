@@ -15,6 +15,31 @@ export function localized<T extends { en: string; ar: string }>(
   return locale === "ar" ? value.ar : value.en;
 }
 
+export function parseDate(value: string | Date | null | undefined) {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const normalized = raw
+    .replace(" ", "T")
+    .replace(/([+-]\d{2})$/, "$1:00");
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function toDateInput(value: string | Date | null | undefined) {
+  const date = parseDate(value);
+  if (!date) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+export function fromDateInput(value: string | null | undefined) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
+  if (!match) return parseDate(value);
+  return new Date(`${match[1]}-${match[2]}-${match[3]}T12:00:00.000Z`);
+}
+
 export function formatDate(value: string | null | undefined, locale: string) {
   if (!value) return "";
   const date = new Date(value);

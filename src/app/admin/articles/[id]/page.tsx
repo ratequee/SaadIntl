@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleForm } from "../_form";
 import { getArticleById, getCategories } from "@/lib/cms";
@@ -12,7 +13,10 @@ export default async function EditArticlePage({
   if (!article) notFound();
   return (
     <div>
-      <h1 className="display mb-8 text-4xl">Edit article</h1>
+      <Link href="/admin/articles" className="text-sm text-gold">
+        ← Back to articles
+      </Link>
+      <h1 className="display mb-8 mt-4 text-4xl">Edit article</h1>
       <ArticleForm article={article} categories={categories} />
     </div>
   );
