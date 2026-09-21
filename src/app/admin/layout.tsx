@@ -14,13 +14,19 @@ async function adminMessages(locale: "en" | "ar") {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const locale = (await cookies()).get("SIP_LOCALE")?.value === "ar" ? "ar" : "en";
-  setRequestLocale(locale);
+  try {
+    setRequestLocale(locale);
+  } catch {
+    // /admin is outside the [locale] segment; cookie-based request config still applies.
+  }
   const [messages, session, settings] = await Promise.all([
     adminMessages(locale),
     getAdminSession(),
     getSettings(),
   ]);
-  const companyName = localized(settings.companyName, locale);
+  const companyName = settings.companyName
+    ? localized(settings.companyName, locale)
+    : undefined;
 
   const content = session ? (
     <AdminShell

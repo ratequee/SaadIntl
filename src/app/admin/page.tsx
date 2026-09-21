@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { getLocale, getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { getDashboardStats } from "@/lib/cms";
 import { localized } from "@/lib/utils";
 
 export default async function AdminDashboardPage() {
-  const t = await getTranslations("admin");
-  const locale = await getLocale();
+  const locale = (await cookies()).get("SIP_LOCALE")?.value === "ar" ? "ar" : "en";
+  const t = await getTranslations({ locale, namespace: "admin" });
   const stats = await getDashboardStats();
   const cards = [
     { label: t("totalProjects"), value: stats.projects },

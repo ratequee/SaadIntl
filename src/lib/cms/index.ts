@@ -605,11 +605,10 @@ export async function addContactMessage(
 }
 
 export async function getDashboardStats() {
-  const [projects, articles, documents, store] = await Promise.all([
+  const [projects, articles, documents] = await Promise.all([
     getProjects({ includeDrafts: true }),
     getArticles({ includeDrafts: true }),
     getDocuments({ includeDrafts: true }),
-    readStore(),
   ]);
   return {
     projects: projects.length,
@@ -619,7 +618,6 @@ export async function getDashboardStats() {
     publishedArticles: articles.filter((item) => item.isPublished).length,
     documents: documents.length,
     publishedDocuments: documents.filter((item) => item.isPublished).length,
-    messages: store.messages.length,
     recentProjects: [...projects]
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
       .slice(0, 5),
