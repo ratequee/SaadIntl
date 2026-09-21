@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { MediaImage } from "@/components/ui/media-image";
@@ -33,11 +33,24 @@ export function ProjectGallery({
   locale: string;
 }) {
   const t = useTranslations("projects");
-  const ordered = [...images].sort((a, b) => a.displayOrder - b.displayOrder);
+  const ordered = useMemo(
+    () => [...images].sort((a, b) => a.displayOrder - b.displayOrder),
+    [images],
+  );
   const featured = ordered.find((item) => item.isFeatured) || ordered[0];
   const [active, setActive] = useState(featured);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const step = useCallback((delta: number) => {
+    if (!ordered.length) return;
+    setLightboxIndex((current) => {
+      const from = current ?? 0;
+      const next = (from + delta + ordered.length) % ordered.length;
+      setActive(ordered[next]);
+      return next;
+    });
+  }, [ordered]);
 
   useEffect(() => setMounted(true), []);
 
@@ -59,7 +72,7 @@ export function ProjectGallery({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxIndex, ordered]);
+  }, [lightboxIndex, step]);
 
   if (!active) return null;
 
@@ -67,16 +80,6 @@ export function ProjectGallery({
     const index = ordered.findIndex((item) => imageKey(item) === imageKey(image));
     setActive(image);
     setLightboxIndex(index === -1 ? 0 : index);
-  }
-
-  function step(delta: number) {
-    if (!ordered.length) return;
-    setLightboxIndex((current) => {
-      const from = current ?? 0;
-      const next = (from + delta + ordered.length) % ordered.length;
-      setActive(ordered[next]);
-      return next;
-    });
   }
 
   const lightboxImage = lightboxIndex !== null ? ordered[lightboxIndex] : null;

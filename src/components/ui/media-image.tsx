@@ -1,6 +1,6 @@
 import Image, { type ImageProps } from "next/image";
 
-function isInlineSrc(src: ImageProps["src"]) {
+function isInlineSrc(src: ImageProps["src"]): src is string {
   return typeof src === "string" && (src.startsWith("blob:") || src.startsWith("data:"));
 }
 

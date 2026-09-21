@@ -21,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(project.updatedAt),
       });
     }
+    for (const article of articles) {
+      entries.push({
+        url: siteUrl(`/${locale}/articles/${article.slug}`),
+        lastModified: new Date(article.updatedAt),
+      });
+    }
     for (const document of documents) {
       entries.push({
         url: siteUrl(`/${locale}/documents/${document.slug}`),
