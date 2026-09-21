@@ -19,7 +19,7 @@ const LINKS = [
   { href: "/contact", key: "contact" },
 ] as const;
 
-export function Header({ hours }: { hours: string }) {
+export function Header({ hours, companyName }: { hours: string; companyName: string }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -60,8 +60,8 @@ export function Header({ hours }: { hours: string }) {
   return (
     <header className="pointer-events-none sticky top-0 z-40 px-3 pt-3 md:px-5 md:pt-4">
       <div className="pointer-events-auto relative mx-auto flex max-w-[1280px] items-center justify-between gap-3 overflow-hidden rounded-full border border-border bg-[var(--header)] px-3 py-2 shadow-[var(--shadow)] backdrop-blur-md md:px-4">
-        <Link href="/" className="shrink-0" onClick={() => setOpen(false)}>
-          <Logo />
+        <Link href="/" className="min-w-0 shrink" onClick={() => setOpen(false)}>
+          <Logo name={companyName} />
         </Link>
 
         <nav className="hidden items-center gap-0 lg:flex xl:gap-1" aria-label="Primary">
@@ -126,8 +126,8 @@ export function Header({ hours }: { hours: string }) {
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between px-5 py-4">
-          <Link href="/" onClick={() => setOpen(false)}>
-            <Logo />
+          <Link href="/" className="min-w-0" onClick={() => setOpen(false)}>
+            <Logo name={companyName} />
           </Link>
           <button
             type="button"

@@ -1,14 +1,13 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
-import { parseDate } from "@/lib/utils";
+import { featuredImageUrlFrom, normalizeGalleryImages, parseDate } from "@/lib/utils";
 import type {
   Article,
-  ArticleInput,
   Category,
-  DocumentInput,
+  DocumentFile,
   DocumentItem,
+  GalleryImage,
   Project,
   ProjectImage,
-  ProjectInput,
   SiteSettings,
   Testimonial,
 } from "@/lib/types";
@@ -16,6 +15,23 @@ import type {
 function toIso(value: unknown) {
   const date = parseDate(value as string | Date | null | undefined);
   return date ? date.toISOString() : null;
+}
+
+function mapFiles(value: unknown, fallback?: DocumentFile): DocumentFile[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        const row = item as Record<string, unknown>;
+        return {
+          url: String(row.url || ""),
+          fileName: String(row.fileName || row.file_name || ""),
+          fileType: String(row.fileType || row.file_type || ""),
+          fileSize: Number(row.fileSize || row.file_size || 0),
+        };
+      })
+      .filter((item) => item.url);
+  }
+  return fallback?.url ? [fallback] : [];
 }
 
 export function remoteCms() {
@@ -65,7 +81,7 @@ export function mapProject(
     completionDate: (row.completion_date as string) || null,
     contractValue: String(row.contract_value || ""),
     services: Array.isArray(row.services) ? (row.services as string[]) : [],
-    featuredImageUrl: String(row.featured_image_url || ""),
+    featuredImageUrl: featuredImageUrlFrom(images, String(row.featured_image_url || "")),
     progress: row.progress == null ? null : Number(row.progress),
     isPublished: Boolean(row.is_published),
     isFeatured: Boolean(row.is_featured),
@@ -80,6 +96,10 @@ export function mapProject(
 }
 
 export function mapArticle(row: Record<string, unknown>): Article {
+  const images = normalizeGalleryImages(
+    row.images as GalleryImage[] | undefined,
+    String(row.featured_image_url || ""),
+  );
   return {
     id: String(row.id),
     slug: String(row.slug),
@@ -87,7 +107,8 @@ export function mapArticle(row: Record<string, unknown>): Article {
     excerpt: loc(row.excerpt_en as string, row.excerpt_ar as string),
     content: loc(row.content_en as string, row.content_ar as string),
     categoryId: String(row.category_id || ""),
-    featuredImageUrl: String(row.featured_image_url || ""),
+    featuredImageUrl: featuredImageUrlFrom(images, String(row.featured_image_url || "")),
+    images,
     author: loc(row.author_en as string, row.author_ar as string),
     readingTimeMinutes: Number(row.reading_time_minutes || 3),
     isPublished: Boolean(row.is_published),
@@ -100,17 +121,28 @@ export function mapArticle(row: Record<string, unknown>): Article {
 }
 
 export function mapDocument(row: Record<string, unknown>): DocumentItem {
+  const primary: DocumentFile = {
+    url: String(row.file_url || ""),
+    fileName: String(row.file_name || ""),
+    fileType: String(row.file_type || ""),
+    fileSize: Number(row.file_size || 0),
+  };
+  const files = mapFiles(row.files, primary);
+  const first = files[0] || primary;
   return {
     id: String(row.id),
     slug: String(row.slug),
     title: loc(row.title_en as string, row.title_ar as string),
     description: loc(row.description_en as string, row.description_ar as string),
     categoryId: String(row.category_id || ""),
-    fileUrl: String(row.file_url || ""),
-    fileName: String(row.file_name || ""),
-    fileType: String(row.file_type || ""),
-    fileSize: Number(row.file_size || 0),
+    fileUrl: first.url,
+    fileName: first.fileName,
+    fileType: first.fileType,
+    fileSize: first.fileSize,
     thumbnailUrl: String(row.thumbnail_url || ""),
+    files,
+    hasExpiry: Boolean(row.has_expiry),
+    expiresAt: toIso(row.expires_at),
     isPublished: Boolean(row.is_published),
     displayOrder: Number(row.display_order || 0),
     createdAt: String(row.created_at || ""),
@@ -191,6 +223,7 @@ export function articleRow(article: Article) {
     content_ar: article.content.ar,
     category_id: article.categoryId || null,
     featured_image_url: article.featuredImageUrl,
+    images: article.images || [],
     author_en: article.author.en,
     author_ar: article.author.ar,
     reading_time_minutes: article.readingTimeMinutes,
@@ -219,6 +252,9 @@ export function documentRow(doc: DocumentItem) {
     file_type: doc.fileType,
     file_size: doc.fileSize,
     thumbnail_url: doc.thumbnailUrl,
+    files: doc.files,
+    has_expiry: doc.hasExpiry,
+    expires_at: doc.expiresAt,
     is_published: doc.isPublished,
     display_order: doc.displayOrder,
     created_at: doc.createdAt,

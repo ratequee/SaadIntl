@@ -17,6 +17,7 @@ export function OrganizationJsonLd({
     telephone: settings.phone,
     address: {
       "@type": "PostalAddress",
+      streetAddress: locale === "ar" ? settings.address.ar : settings.address.en,
       addressLocality: locale === "ar" ? "الدوحة" : "Doha",
       addressCountry: "QA",
     },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { buttonClass, goldHoverClass } from "@/components/ui/button";
 import { IMAGE_ACCEPT, isAllowedImage, MAX_GALLERY_IMAGES, MAX_IMAGE_SIZE } from "@/lib/validations";
 
@@ -25,6 +26,7 @@ export function GalleryField({
   deferUpload?: boolean;
   onChange?: (images: GalleryItem[]) => void;
 }) {
+  const t = useTranslations("admin");
   const inputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<GalleryItem[]>(
     defaultImages.map((image) => ({ ...image, preview: image.url })),
@@ -32,8 +34,14 @@ export function GalleryField({
   const [error, setError] = useState("");
 
   function commit(next: GalleryItem[]) {
-    setImages(next);
-    onChange?.(next);
+    const featuredIndex = next.findIndex((item) => item.isFeatured);
+    const normalized = next.map((item, index) => ({
+      ...item,
+      isFeatured: (featuredIndex >= 0 ? featuredIndex : 0) === index,
+      displayOrder: index + 1,
+    }));
+    setImages(normalized);
+    onChange?.(normalized);
   }
 
   function addFiles(event: React.ChangeEvent<HTMLInputElement>) {
@@ -42,23 +50,19 @@ export function GalleryField({
     setError("");
     const remaining = MAX_GALLERY_IMAGES - images.length;
     if (remaining <= 0) {
-      setError(`You can add up to ${MAX_GALLERY_IMAGES} images.`);
+      setError(t("galleryLimit", { max: MAX_GALLERY_IMAGES }));
       return;
     }
 
     const selected = files.slice(0, remaining);
     if (files.length > remaining) {
-      setError(`Only ${MAX_GALLERY_IMAGES} images are allowed. Extra files were skipped.`);
+      setError(t("gallerySkipped", { max: MAX_GALLERY_IMAGES }));
     }
 
     const accepted: GalleryItem[] = [];
     for (const file of selected) {
       if (!file.type.startsWith("image/") || !isAllowedImage(file)) {
-        setError(
-          file.size > MAX_IMAGE_SIZE
-            ? "Each image must be 10 MB or smaller."
-            : "Gallery accepts JPG, PNG, WEBP or AVIF only.",
-        );
+        setError(file.size > MAX_IMAGE_SIZE ? t("imageTooLarge") : t("galleryTypes"));
         continue;
       }
       accepted.push({
@@ -89,7 +93,7 @@ export function GalleryField({
       body.set("kind", "images");
       const response = await fetch("/api/upload", { method: "POST", body });
       if (!response.ok) {
-        setError("Upload failed. Check file type and size (max 10 MB).");
+        setError(t("uploadFailed"));
         continue;
       }
       const data = await response.json();
@@ -117,9 +121,10 @@ export function GalleryField({
   return (
     <div className="grid gap-3">
       <p className="text-sm font-medium">
-        Gallery
+        {t("images")}
         {required ? <span className="text-gold"> *</span> : null}
       </p>
+      <p className="text-xs text-muted">{t("imagesHelp")}</p>
       <input
         ref={inputRef}
         type="file"
@@ -145,11 +150,11 @@ export function GalleryField({
           onClick={() => inputRef.current?.click()}
           className={buttonClass("dark", goldHoverClass)}
         >
-          Add images
+          {t("addImages")}
         </button>
         <p className="text-xs text-muted">
-          Images only · max 10 MB each · {images.length}/{MAX_GALLERY_IMAGES}
-          {deferUpload ? " · uploads on save" : ""}
+          {t("imageCount", { count: images.length, max: MAX_GALLERY_IMAGES })}
+          {deferUpload ? ` · ${t("uploadsOnSave")}` : ""}
         </p>
       </div>
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
@@ -160,8 +165,9 @@ export function GalleryField({
             <img src={image.preview} alt="" className="h-16 w-20 rounded-lg object-cover" />
             <input
               className="min-w-40 flex-1 rounded-full border border-border px-3 py-2 text-sm"
-              placeholder="Caption EN"
+              placeholder={t("captionEn")}
               value={image.caption.en}
+              dir="ltr"
               onChange={(event) =>
                 commit(
                   images.map((item, i) =>
@@ -172,7 +178,7 @@ export function GalleryField({
             />
             <input
               className="min-w-40 flex-1 rounded-full border border-border px-3 py-2 text-sm"
-              placeholder="Caption AR"
+              placeholder={t("captionAr")}
               value={image.caption.ar}
               dir="rtl"
               onChange={(event) =>
@@ -185,26 +191,27 @@ export function GalleryField({
             />
             <label className="flex items-center gap-2 text-sm">
               <input
-                type="checkbox"
+                type="radio"
+                name="featured-image"
                 checked={image.isFeatured}
                 onChange={() =>
                   commit(images.map((item, i) => ({ ...item, isFeatured: i === index })))
                 }
               />
-              Featured
+              {t("featured")}
             </label>
             <button type="button" className="text-sm" onClick={() => move(index, -1)}>
-              Up
+              {t("up")}
             </button>
             <button type="button" className="text-sm" onClick={() => move(index, 1)}>
-              Down
+              {t("down")}
             </button>
             <button
               type="button"
               className="text-sm text-red-700"
               onClick={() => commit(images.filter((_, i) => i !== index))}
             >
-              Delete
+              {t("delete")}
             </button>
           </li>
         ))}

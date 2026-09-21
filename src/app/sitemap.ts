@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
-import { getArticles, getProjects } from "@/lib/cms";
+import { getArticles, getDocuments, getProjects } from "@/lib/cms";
 import { siteUrl } from "@/lib/utils";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [projects, articles] = await Promise.all([getProjects(), getArticles()]);
+  const [projects, articles, documents] = await Promise.all([getProjects(), getArticles(), getDocuments()]);
   const locales = ["en", "ar"] as const;
   const staticPaths = ["", "/about", "/projects", "/articles", "/documents", "/contact"];
 
@@ -21,10 +21,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(project.updatedAt),
       });
     }
-    for (const article of articles) {
+    for (const document of documents) {
       entries.push({
-        url: siteUrl(`/${locale}/articles/${article.slug}`),
-        lastModified: new Date(article.updatedAt),
+        url: siteUrl(`/${locale}/documents/${document.slug}`),
+        lastModified: new Date(document.updatedAt),
       });
     }
   }

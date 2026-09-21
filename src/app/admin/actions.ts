@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { noticePath } from "@/lib/admin-notice";
 import { getAdminSession } from "@/lib/auth/session";
 import {
@@ -12,7 +13,7 @@ import {
   saveProject,
   updateSettings,
 } from "@/lib/cms";
-import { fromDateInput, readingTime, slugify } from "@/lib/utils";
+import { fromDateInput, featuredImageUrlFrom, normalizeGalleryImages, readingTime, slugify } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { MAX_GALLERY_IMAGES } from "@/lib/validations";
 import type { ArticleInput, DocumentInput, ProjectInput, SiteSettings } from "@/lib/types";
@@ -20,6 +21,11 @@ import type { ArticleInput, DocumentInput, ProjectInput, SiteSettings } from "@/
 async function requireAdmin() {
   const session = await getAdminSession();
   if (!session) redirect("/admin/login");
+}
+
+async function fail(key: "allProjectFields" | "addAtLeastOneImage" | "filesRequired" | "expiryRequired" | "requiredFields") {
+  const t = await getTranslations("admin");
+  throw new Error(t(key));
 }
 
 function text(form: FormData, key: string) {
@@ -33,7 +39,10 @@ function bool(form: FormData, key: string) {
 export async function upsertProjectAction(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id") || undefined;
-  const images = (JSON.parse(text(formData, "images") || "[]") as ProjectInput["images"]) || [];
+  const images = normalizeGalleryImages(
+    JSON.parse(text(formData, "images") || "[]") as ProjectInput["images"],
+  );
+  const featuredImageUrl = featuredImageUrlFrom(images);
   const required = [
     "title_en",
     "title_ar",
@@ -52,14 +61,13 @@ export async function upsertProjectAction(formData: FormData) {
     "excerpt_ar",
     "description_en",
     "description_ar",
-    "featuredImageUrl",
     "seo_title_en",
     "seo_title_ar",
     "seo_description_en",
     "seo_description_ar",
   ];
-  if (required.some((key) => !text(formData, key)) || !images.length || images.length > MAX_GALLERY_IMAGES) {
-    throw new Error("All project fields are required, with 1 to 10 gallery images.");
+  if (required.some((key) => !text(formData, key)) || !featuredImageUrl || !images.length || images.length > MAX_GALLERY_IMAGES) {
+    await fail("allProjectFields");
   }
   const payload: ProjectInput = {
     slug: text(formData, "slug") || slugify(text(formData, "title_en")),
@@ -80,7 +88,7 @@ export async function upsertProjectAction(formData: FormData) {
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean),
-    featuredImageUrl: text(formData, "featuredImageUrl"),
+    featuredImageUrl,
     progress: text(formData, "progress") ? Number(text(formData, "progress")) : null,
     isPublished: bool(formData, "isPublished"),
     isFeatured: bool(formData, "isFeatured"),
@@ -107,13 +115,17 @@ export async function upsertArticleAction(formData: FormData) {
     en: sanitizeHtml(text(formData, "content_en")),
     ar: sanitizeHtml(text(formData, "content_ar")),
   };
+  const images = normalizeGalleryImages(JSON.parse(text(formData, "images") || "[]"));
+  const featuredImageUrl = featuredImageUrlFrom(images);
+  if (!featuredImageUrl) await fail("addAtLeastOneImage");
   const payload: ArticleInput = {
     slug: text(formData, "slug") || slugify(text(formData, "title_en")),
     title: { en: text(formData, "title_en"), ar: text(formData, "title_ar") },
     excerpt: { en: text(formData, "excerpt_en"), ar: text(formData, "excerpt_ar") },
     content,
     categoryId: text(formData, "categoryId"),
-    featuredImageUrl: text(formData, "featuredImageUrl"),
+    featuredImageUrl,
+    images,
     author: { en: text(formData, "author_en"), ar: text(formData, "author_ar") },
     readingTimeMinutes: readingTime(`${content.en} ${content.ar}`),
     isPublished: bool(formData, "isPublished"),
@@ -138,16 +150,25 @@ export async function deleteArticleAction(formData: FormData) {
 export async function upsertDocumentAction(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id") || undefined;
+  const files = JSON.parse(text(formData, "files") || "[]") as DocumentInput["files"];
+  const hasExpiry = bool(formData, "hasExpiry");
+  const expires = fromDateInput(text(formData, "expiresAt"));
+  if (!files.length) await fail("filesRequired");
+  if (hasExpiry && !expires) await fail("expiryRequired");
+  const first = files[0];
   const payload: DocumentInput = {
-    slug: text(formData, "slug"),
+    slug: text(formData, "slug") || slugify(text(formData, "title_en")),
     title: { en: text(formData, "title_en"), ar: text(formData, "title_ar") },
     description: { en: text(formData, "description_en"), ar: text(formData, "description_ar") },
     categoryId: text(formData, "categoryId"),
-    fileUrl: text(formData, "fileUrl"),
-    fileName: text(formData, "fileName"),
-    fileType: text(formData, "fileType") || "application/pdf",
-    fileSize: Number(text(formData, "fileSize") || 0),
+    fileUrl: first.url,
+    fileName: first.fileName,
+    fileType: first.fileType,
+    fileSize: Number(first.fileSize || 0),
     thumbnailUrl: text(formData, "thumbnailUrl"),
+    files,
+    hasExpiry,
+    expiresAt: hasExpiry && expires ? expires.toISOString() : null,
     isPublished: bool(formData, "isPublished"),
     displayOrder: Number(text(formData, "displayOrder") || 99),
     publishedAt: bool(formData, "isPublished") ? new Date().toISOString() : null,
@@ -174,6 +195,13 @@ export async function updateSettingsAction(formData: FormData) {
     address: { en: text(formData, "address_en"), ar: text(formData, "address_ar") },
     mapEmbedUrl: text(formData, "mapEmbedUrl"),
   };
+  if (
+    !settings.companyName.en ||
+    !settings.companyName.ar ||
+    !settings.email ||
+    !settings.phone
+  ) {
+    await fail("requiredFields");
+  }
   await updateSettings(settings);
-  redirect(noticePath("/admin/settings", "settings-saved"));
 }

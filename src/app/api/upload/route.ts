@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/auth/session";
 import { saveUpload } from "@/lib/uploads";
-import { isAllowedDocument, isAllowedImage } from "@/lib/validations";
+import { isAllowedImage } from "@/lib/validations";
+
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const session = await getAdminSession();
@@ -17,14 +19,11 @@ export async function POST(request: Request) {
   }
 
   if (kind === "documents") {
-    if (!isAllowedDocument(file)) {
-      return NextResponse.json({ error: "invalid" }, { status: 400 });
-    }
     const url = await saveUpload(file, "documents");
     return NextResponse.json({
       url,
       name: file.name,
-      type: file.type,
+      type: file.type || "application/octet-stream",
       size: file.size,
     });
   }

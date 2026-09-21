@@ -46,9 +46,14 @@ export default async function ProjectDetailPage({
 
   return (
     <div className="container-site py-12 md:py-20">
-      <p className="text-sm text-muted">
+      <p className="flex flex-wrap items-center gap-3 text-sm text-muted">
         <Link href="/projects">{t("pageTitle")}</Link>
         {category ? ` · ${localized(category.name, locale)}` : ""}
+        {project.isFeatured ? (
+          <span className="rounded-full bg-gold px-3 py-1 text-xs font-semibold text-espresso">
+            {t("featured")}
+          </span>
+        ) : null}
       </p>
       <h1 className="display mt-3 max-w-4xl text-5xl md:text-7xl">
         {localized(project.title, locale)}

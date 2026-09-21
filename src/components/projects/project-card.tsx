@@ -1,4 +1,7 @@
+"use client";
+
 import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { IconArrowUpRight } from "@/components/ui/icons";
 import { MediaImage } from "@/components/ui/media-image";
 import { localized } from "@/lib/utils";
@@ -13,6 +16,8 @@ export function ProjectCard({
   locale: string;
   category?: Category;
 }) {
+  const t = useTranslations("projects");
+
   return (
     <Link href={`/projects/${project.slug}`} className="group block">
       <article>
@@ -25,6 +30,11 @@ export function ProjectCard({
             sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="h-64 w-full object-cover transition duration-500 group-hover:scale-[1.02]"
           />
+          {project.isFeatured ? (
+            <span className="absolute start-4 top-4 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-espresso">
+              {t("featured")}
+            </span>
+          ) : null}
           <span className="absolute end-4 bottom-4 grid size-10 place-items-center rounded-full bg-white text-ink">
             <IconArrowUpRight className="size-4 rtl:-scale-x-100" />
           </span>

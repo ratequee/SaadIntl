@@ -30,7 +30,10 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <LocaleAttributes locale={locale} />
-      <Header hours={localized(settings.hours, locale)} />
+      <Header
+        hours={localized(settings.hours, locale)}
+        companyName={localized(settings.companyName, locale)}
+      />
       <main>{children}</main>
       <Footer settings={settings} locale={locale} />
     </NextIntlClientProvider>

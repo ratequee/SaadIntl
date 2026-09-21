@@ -55,8 +55,8 @@ export async function HomePage({
           <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12 lg:p-16">
             <div className="grid items-end gap-8 lg:grid-cols-[1fr_340px]">
               <div className="max-w-3xl text-white">
-                <h1 className="display text-5xl md:text-7xl">{t("hero.title")}</h1>
-                <p className="mt-5 max-w-xl text-base text-white/85 md:text-lg">{t("hero.subtitle")}</p>
+                <h1 className="display text-5xl md:text-7xl">{localized(settings.tagline, locale)}</h1>
+                <p className="mt-5 max-w-xl text-base text-white/85 md:text-lg">{localized(settings.about, locale)}</p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
                     href="/contact"
@@ -259,8 +259,8 @@ export async function HomePage({
           <ul className="mt-6 space-y-3">
             {documents.slice(0, 3).map((doc) => (
               <li key={doc.id}>
-                <a
-                  href={doc.fileUrl}
+                <Link
+                  href={`/documents/${doc.slug}`}
                   className="flex items-start justify-between gap-3 rounded-xl bg-white px-4 py-3 text-sm text-ink transition-colors hover:bg-[color-mix(in_srgb,var(--gold)_16%,white)]"
                 >
                   <span className="inline-flex min-w-0 items-start gap-3">
@@ -274,7 +274,7 @@ export async function HomePage({
                   <span className="mt-0.5 shrink-0">
                     <IconDownload />
                   </span>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -307,13 +307,16 @@ export async function HomePage({
                     {t("contact.phone")} · {localized(settings.hours, locale)}
                   </dt>
                   <dd>
-                    <a href={`tel:${settings.phone.replace(/\s/g, "")}`}>{settings.phone}</a>
+                    <a href={`tel:${settings.phone.replace(/\s/g, "")}`} dir="ltr" className="inline-block">
+                      {settings.phone}
+                    </a>
                   </dd>
                 </div>
               </div>
             </dl>
+            <p className="mt-8 text-sm text-white/70">{localized(settings.address, locale)}</p>
           </div>
-          <ContactForm locale={locale} />
+          <ContactForm locale={locale} replyEmail={settings.email} />
         </div>
       </section>
     </>

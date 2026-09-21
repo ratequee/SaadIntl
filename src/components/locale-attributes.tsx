@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 export function LocaleAttributes({ locale }: { locale: string }) {
-  useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
-  }, [locale]);
+  const dir = locale === "ar" ? "rtl" : "ltr";
 
-  return null;
+  useLayoutEffect(() => {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = dir;
+  }, [dir, locale]);
+
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `document.documentElement.lang=${JSON.stringify(locale)};document.documentElement.dir=${JSON.stringify(dir)};`,
+      }}
+    />
+  );
 }

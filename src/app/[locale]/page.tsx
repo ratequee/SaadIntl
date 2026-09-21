@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { HomePage } from "@/components/home/home-page";
 import { OrganizationJsonLd } from "@/components/seo/json-ld";
 import {
@@ -10,6 +10,7 @@ import {
   getSettings,
   getTestimonials,
 } from "@/lib/cms";
+import { localized } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -17,14 +18,14 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "meta" });
+  const settings = await getSettings();
   return {
-    title: t("homeTitle"),
-    description: t("homeDescription"),
+    title: localized(settings.companyName, locale),
+    description: localized(settings.about, locale) || localized(settings.tagline, locale),
     alternates: { canonical: `/${locale}` },
     openGraph: {
-      title: t("homeTitle"),
-      description: t("homeDescription"),
+      title: localized(settings.companyName, locale),
+      description: localized(settings.about, locale) || localized(settings.tagline, locale),
       locale: locale === "ar" ? "ar_QA" : "en_QA",
       images: ["/images/villa-compound.jpg"],
     },

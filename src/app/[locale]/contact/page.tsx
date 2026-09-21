@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ContactForm } from "@/components/contact/contact-form";
 import { IconMail, IconPhone } from "@/components/ui/icons";
 import { getSettings } from "@/lib/cms";
-import { localized } from "@/lib/utils";
+import { localized, mapsEmbedSrc } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -28,6 +28,11 @@ export default async function ContactPage({
   setRequestLocale(locale);
   const t = await getTranslations("contact");
   const settings = await getSettings();
+  const mapSrc =
+    mapsEmbedSrc(settings.mapEmbedUrl) ||
+    (localized(settings.address, locale)
+      ? `https://maps.google.com/maps?q=${encodeURIComponent(localized(settings.address, locale))}&output=embed`
+      : "");
 
   return (
     <div className="container-site py-16 md:py-24">
@@ -54,15 +59,27 @@ export default async function ContactPage({
                   {t("phone")} · {localized(settings.hours, locale)}
                 </dt>
                 <dd>
-                  <a href={`tel:${settings.phone.replace(/\s/g, "")}`}>{settings.phone}</a>
+                  <a href={`tel:${settings.phone.replace(/\s/g, "")}`} dir="ltr" className="inline-block">
+                    {settings.phone}
+                  </a>
                 </dd>
               </div>
             </div>
           </dl>
           <p className="mt-8 text-sm text-cream/60">{localized(settings.address, locale)}</p>
         </div>
-        <ContactForm locale={locale} />
+        <ContactForm locale={locale} replyEmail={settings.email} />
       </div>
+      {mapSrc ? (
+        <iframe
+          title={localized(settings.address, locale) || "Map"}
+          src={mapSrc}
+          className="mt-10 h-80 w-full rounded-[2rem] border-0"
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      ) : null}
     </div>
   );
 }

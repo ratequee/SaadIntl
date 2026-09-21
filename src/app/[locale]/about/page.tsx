@@ -4,6 +4,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { buttonClass } from "@/components/ui/button";
 import { IconArrow, IconCheck, IconHouse, IconPencil, IconSofa } from "@/components/ui/icons";
+import { getSettings } from "@/lib/cms";
+import { localized } from "@/lib/utils";
 
 export async function generateMetadata({
   params,
@@ -23,12 +25,13 @@ export default async function AboutPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
+  const settings = await getSettings();
 
   return (
     <div className="container-site py-16 md:py-24">
-      <p className="text-sm text-gold">{locale === "ar" ? "الشركة" : "The company"}</p>
+      <p className="text-sm text-gold">{localized(settings.companyName, locale)}</p>
       <h1 className="display mt-3 max-w-4xl text-5xl md:text-7xl">{t("about.title")}</h1>
-      <p className="mt-6 max-w-2xl text-lg text-muted">{t("about.lead")}</p>
+      <p className="mt-6 max-w-2xl text-lg text-muted">{localized(settings.about, locale)}</p>
       <div className="mt-12 grid gap-8 lg:grid-cols-2">
         <Image
           src="/images/lobby.jpg"
@@ -38,7 +41,7 @@ export default async function AboutPage({
           className="h-[420px] w-full rounded-[2rem] object-cover"
         />
         <div className="flex flex-col justify-center">
-          <p className="text-muted">{t("about.body1")}</p>
+          <p className="text-muted">{localized(settings.tagline, locale)}</p>
           <p className="mt-4 text-muted">{t("about.body2")}</p>
           <div className="mt-8 grid grid-cols-2 gap-3">
             <div className="rounded-[1.6rem] bg-gold p-6 text-espresso">

@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { getLocale, getTranslations } from "next-intl/server";
 import { deleteProjectAction } from "@/app/admin/actions";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { getProjects } from "@/lib/cms";
 import { buttonClass, goldHoverClass } from "@/components/ui/button";
 import { MediaImage } from "@/components/ui/media-image";
+import { localized } from "@/lib/utils";
 
 const PAGE_SIZE = 8;
 
@@ -12,21 +14,28 @@ export default async function AdminProjectsPage({
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
+  const t = await getTranslations("admin");
+  const locale = await getLocale();
   const { q = "", page = "1" } = await searchParams;
-  const all = await getProjects({ includeDrafts: true, query: q });
+  const all = await getProjects({ includeDrafts: true, query: q, locale });
   const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
   const current = Math.min(Math.max(1, Number(page) || 1), totalPages);
   const projects = all.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const statusLabel = {
+    planning: t("planning"),
+    in_progress: t("inProgress"),
+    completed: t("completed"),
+  };
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="display text-4xl">Projects</h1>
-          <p className="mt-2 text-muted">Create, publish and reorder project showcases.</p>
+          <h1 className="display text-4xl">{t("projects")}</h1>
+          <p className="mt-2 text-muted">{t("projectsLead")}</p>
         </div>
         <Link href="/admin/projects/new" className={buttonClass("dark", goldHoverClass)}>
-          Add project
+          {t("addProject")}
         </Link>
       </div>
 
@@ -34,11 +43,11 @@ export default async function AdminProjectsPage({
         <input
           name="q"
           defaultValue={q}
-          placeholder="Search title or location"
+          placeholder={t("searchProjects")}
           className="min-w-64 flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm"
         />
         <button type="submit" className={buttonClass("dark", goldHoverClass)}>
-          Search
+          {t("search")}
         </button>
       </form>
 
@@ -46,67 +55,71 @@ export default async function AdminProjectsPage({
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-border text-muted">
-              <th className="px-4 py-3 text-start font-medium">Image</th>
-              <th className="px-4 py-3 text-start font-medium">Title</th>
-              <th className="px-4 py-3 text-start font-medium">Status</th>
-              <th className="px-4 py-3 text-start font-medium">Visibility</th>
-              <th className="px-4 py-3 text-start font-medium">Order</th>
-              <th className="px-4 py-3 text-start font-medium">Actions</th>
+              <th className="px-4 py-3 text-start font-medium">{t("image")}</th>
+              <th className="px-4 py-3 text-start font-medium">{t("title")}</th>
+              <th className="px-4 py-3 text-start font-medium">{t("status")}</th>
+              <th className="px-4 py-3 text-start font-medium">{t("visibility")}</th>
+              <th className="px-4 py-3 text-start font-medium">{t("order")}</th>
+              <th className="px-4 py-3 text-start font-medium">{t("actions")}</th>
             </tr>
           </thead>
           <tbody>
             {projects.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-start text-muted">
-                  No projects match this search.
+                  {t("noProjectsSearch")}
                 </td>
               </tr>
             ) : (
-              projects.map((project) => (
-                <tr key={project.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-4 text-start align-top">
-                    {project.featuredImageUrl ? (
-                      <MediaImage
-                        src={project.featuredImageUrl}
-                        alt=""
-                        width={80}
-                        height={56}
-                        sizes="80px"
-                        className="h-14 w-20 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <span className="grid h-14 w-20 place-items-center rounded-lg bg-surface text-xs text-muted">
-                        —
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 text-start align-top">
-                    <p className="font-medium">{project.title.en}</p>
-                    <p className="text-muted" dir="rtl">{project.title.ar}</p>
-                  </td>
-                  <td className="px-4 py-4 text-start align-top whitespace-nowrap">{project.status}</td>
-                  <td className="px-4 py-4 text-start align-top whitespace-nowrap">
-                    {project.isPublished ? "Published" : "Draft"}
-                  </td>
-                  <td className="px-4 py-4 text-start align-top whitespace-nowrap">{project.displayOrder}</td>
-                  <td className="px-4 py-4 text-start align-top">
-                    <div className="flex flex-wrap items-center gap-3 whitespace-nowrap">
-                      <Link href={`/admin/projects/${project.id}`} className="text-gold">
-                        Edit
-                      </Link>
-                      <Link href={`/en/projects/${project.slug}`} className="text-muted" target="_blank">
-                        Preview
-                      </Link>
-                      <ConfirmDelete
-                        action={deleteProjectAction}
-                        id={project.id}
-                        name={project.title.en}
-                        kind="project"
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))
+              projects.map((project) => {
+                const title = localized(project.title, locale);
+                return (
+                  <tr key={project.id} className="border-b border-border last:border-0">
+                    <td className="px-4 py-4 text-start align-top">
+                      {project.featuredImageUrl ? (
+                        <MediaImage
+                          src={project.featuredImageUrl}
+                          alt=""
+                          width={80}
+                          height={56}
+                          sizes="80px"
+                          className="h-14 w-20 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <span className="grid h-14 w-20 place-items-center rounded-lg bg-surface text-xs text-muted">
+                          —
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-start align-top">
+                      <p className="font-medium">{title}</p>
+                    </td>
+                    <td className="px-4 py-4 text-start align-top whitespace-nowrap">
+                      {statusLabel[project.status] || project.status}
+                    </td>
+                    <td className="px-4 py-4 text-start align-top whitespace-nowrap">
+                      {project.isPublished ? t("published") : t("draft")}
+                    </td>
+                    <td className="px-4 py-4 text-start align-top whitespace-nowrap">{project.displayOrder}</td>
+                    <td className="px-4 py-4 text-start align-top">
+                      <div className="flex flex-wrap items-center gap-3 whitespace-nowrap">
+                        <Link href={`/admin/projects/${project.id}`} className="text-gold">
+                          {t("edit")}
+                        </Link>
+                        <Link href={`/${locale}/projects/${project.slug}`} className="text-muted" target="_blank">
+                          {t("preview")}
+                        </Link>
+                        <ConfirmDelete
+                          action={deleteProjectAction}
+                          id={project.id}
+                          name={title}
+                          kind="project"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -119,18 +132,16 @@ export default async function AdminProjectsPage({
               href={`/admin/projects?q=${encodeURIComponent(q)}&page=${current - 1}`}
               className="text-gold"
             >
-              Previous
+              {t("previous")}
             </Link>
           ) : null}
-          <span className="text-muted">
-            Page {current} of {totalPages}
-          </span>
+          <span className="text-muted">{t("pageOf", { current, total: totalPages })}</span>
           {current < totalPages ? (
             <Link
               href={`/admin/projects?q=${encodeURIComponent(q)}&page=${current + 1}`}
               className="text-gold"
             >
-              Next
+              {t("next")}
             </Link>
           ) : null}
         </div>

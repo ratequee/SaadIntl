@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { buttonClass } from "@/components/ui/button";
 
-export function ContactForm({ locale }: { locale: string }) {
+export function ContactForm({ locale, replyEmail }: { locale: string; replyEmail?: string }) {
   const t = useTranslations("contact");
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error" | "rateLimit">("idle");
 
@@ -46,7 +46,14 @@ export function ContactForm({ locale }: { locale: string }) {
         </label>
         <label className="grid gap-2 text-sm">
           <span className="sr-only">{t("phone")}</span>
-          <input name="phone" required minLength={6} placeholder={t("phonePlaceholder")} className={field} />
+          <input
+            name="phone"
+            required
+            minLength={6}
+            dir="ltr"
+            placeholder={t("phonePlaceholder")}
+            className={field}
+          />
         </label>
       </div>
       <label className="grid gap-2 text-sm">
@@ -77,7 +84,7 @@ export function ContactForm({ locale }: { locale: string }) {
         <button type="submit" disabled={status === "sending"} className={buttonClass("gold")}>
           {status === "sending" ? t("sending") : t("submit")}
         </button>
-        <p className="mt-3 text-xs text-white/70">{t("note")}</p>
+        <p className="mt-3 text-xs text-white/70">{t("note", { email: replyEmail || "info@sipqa.com" })}</p>
         {status === "success" ? <p className="mt-2 text-sm text-gold">{t("success")}</p> : null}
         {status === "error" ? <p className="mt-2 text-sm text-red-300">{t("error")}</p> : null}
         {status === "rateLimit" ? <p className="mt-2 text-sm text-red-300">{t("rateLimit")}</p> : null}

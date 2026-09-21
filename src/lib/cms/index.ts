@@ -5,6 +5,12 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { deleteUpload } from "@/lib/uploads";
 import {
+  documentAttachments,
+  documentExpiry,
+  featuredImageUrlFrom,
+  normalizeGalleryImages,
+} from "@/lib/utils";
+import {
   deleteRemoteArticle,
   deleteRemoteDocument,
   deleteRemoteProject,
@@ -51,6 +57,38 @@ function publishedOnly<T extends { isPublished: boolean }>(
   return includeDrafts ? items : items.filter((item) => item.isPublished);
 }
 
+function withProjectFeatured(project: Project): Project {
+  return {
+    ...project,
+    featuredImageUrl: featuredImageUrlFrom(project.images, project.featuredImageUrl),
+  };
+}
+
+function withArticleImages(article: Article): Article {
+  const images = normalizeGalleryImages(article.images, article.featuredImageUrl);
+  return {
+    ...article,
+    images,
+    featuredImageUrl: featuredImageUrlFrom(images, article.featuredImageUrl),
+  };
+}
+
+function normalizeDocument(doc: DocumentItem): DocumentItem {
+  const files = documentAttachments(doc);
+  const first = files[0];
+  return {
+    ...doc,
+    files,
+    fileUrl: first?.url || doc.fileUrl || "",
+    fileName: first?.fileName || doc.fileName || "",
+    fileType: first?.fileType || doc.fileType || "",
+    fileSize: first?.fileSize ?? doc.fileSize ?? 0,
+    thumbnailUrl: doc.thumbnailUrl || "",
+    hasExpiry: Boolean(doc.hasExpiry),
+    expiresAt: doc.expiresAt || null,
+  };
+}
+
 async function fromSupabase<T>(fn: () => Promise<T>, fallback: () => Promise<T>) {
   if (!isSupabaseConfigured()) return fallback();
   try {
@@ -73,11 +111,12 @@ export async function updateSettings(settings: SiteSettings) {
   });
   const supabase = getSupabaseServer();
   if (supabase) {
-    await supabase.from("site_settings").upsert({
+    const { error } = await supabase.from("site_settings").upsert({
       id: "default",
       payload: settings,
       updated_at: nowIso(),
     });
+    if (error) throw error;
   }
   refreshPublic();
 }
@@ -91,42 +130,66 @@ export async function getCategories(type?: Category["type"]) {
   return type ? categories.filter((item) => item.type === type) : categories;
 }
 
+function searchableText(value: string) {
+  return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function projectSearchHaystack(item: Project, locale?: string, categoryName = "") {
+  const localizedFields =
+    locale === "ar"
+      ? [item.title.ar, item.location.ar, item.excerpt.ar, item.description.ar, item.seoTitle.ar, item.seoDescription.ar]
+      : locale === "en"
+        ? [item.title.en, item.location.en, item.excerpt.en, item.description.en, item.seoTitle.en, item.seoDescription.en]
+        : [
+            item.title.en,
+            item.title.ar,
+            item.location.en,
+            item.location.ar,
+            item.excerpt.en,
+            item.excerpt.ar,
+            item.description.en,
+            item.description.ar,
+          ];
+  return searchableText([...localizedFields, categoryName, item.client].join(" "));
+}
+
 export async function getProjects(options?: {
   includeDrafts?: boolean;
   featured?: boolean;
   category?: string;
   status?: string;
   query?: string;
+  locale?: string;
 }) {
   const source = await fromSupabase(async () => {
     const remote = await fetchRemoteProjects(Boolean(options?.includeDrafts));
     return remote ?? (await readStore()).projects;
   }, async () => (await readStore()).projects);
-  let projects = publishedOnly(source, Boolean(options?.includeDrafts));
+  let projects = publishedOnly(source, Boolean(options?.includeDrafts)).map(withProjectFeatured);
   if (options?.featured) projects = projects.filter((item) => item.isFeatured);
+  const needsCategories =
+    (options?.category && options.category !== "all") || Boolean(options?.query?.trim());
+  const categories = needsCategories ? await getCategories("project") : [];
   if (options?.category && options.category !== "all") {
-    const categories = await getCategories("project");
     const match = categories.find((item) => item.slug === options.category);
     if (match) projects = projects.filter((item) => item.categoryId === match.id);
   }
   if (options?.status && options.status !== "all") {
     projects = projects.filter((item) => item.status === options.status);
   }
-  if (options?.query) {
-    const q = options.query.toLowerCase();
-    projects = projects.filter((item) =>
-      [
-        item.title.en,
-        item.title.ar,
-        item.location.en,
-        item.location.ar,
-        item.excerpt.en,
-        item.excerpt.ar,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q),
-    );
+  const query = options?.query?.trim().toLowerCase();
+  if (query) {
+    projects = projects.filter((item) => {
+      const category = categories.find((entry) => entry.id === item.categoryId);
+      const categoryName = category
+        ? options?.locale === "ar"
+          ? category.name.ar
+          : options?.locale === "en"
+            ? category.name.en
+            : `${category.name.en} ${category.name.ar}`
+        : "";
+      return projectSearchHaystack(item, options?.locale, categoryName).includes(query);
+    });
   }
   return [...projects].sort((a, b) => a.displayOrder - b.displayOrder);
 }
@@ -141,7 +204,7 @@ export async function getProjectById(id: string) {
     const remote = await fetchRemoteProjects(true);
     return remote ?? (await readStore()).projects;
   }, async () => (await readStore()).projects);
-  return projects.find((item) => item.id === id) || null;
+  return projects.map(withProjectFeatured).find((item) => item.id === id) || null;
 }
 
 export async function saveProject(input: ProjectInput, id?: string) {
@@ -176,6 +239,7 @@ export async function saveProject(input: ProjectInput, id?: string) {
             displayOrder: image.displayOrder ?? order + 1,
           };
         }),
+        featuredImageUrl: featuredImageUrlFrom(input.images || current.images, input.featuredImageUrl),
         updatedAt: timestamp,
         publishedAt: input.isPublished ? current.publishedAt || timestamp : null,
       };
@@ -192,6 +256,7 @@ export async function saveProject(input: ProjectInput, id?: string) {
           projectId,
           displayOrder: image.displayOrder ?? order + 1,
         })),
+        featuredImageUrl: featuredImageUrlFrom(input.images, input.featuredImageUrl),
         createdAt: timestamp,
         updatedAt: timestamp,
         publishedAt: input.isPublished ? timestamp : null,
@@ -220,29 +285,56 @@ export async function deleteProject(id: string) {
   refreshPublic();
 }
 
+function articleSearchHaystack(item: Article, locale?: string, categoryName = "") {
+  const localizedFields =
+    locale === "ar"
+      ? [item.title.ar, item.excerpt.ar, item.content.ar, item.author.ar, item.seoTitle.ar, item.seoDescription.ar]
+      : locale === "en"
+        ? [item.title.en, item.excerpt.en, item.content.en, item.author.en, item.seoTitle.en, item.seoDescription.en]
+        : [
+            item.title.en,
+            item.title.ar,
+            item.excerpt.en,
+            item.excerpt.ar,
+            item.content.en,
+            item.content.ar,
+            item.author.en,
+            item.author.ar,
+          ];
+  return searchableText([...localizedFields, categoryName].join(" "));
+}
+
 export async function getArticles(options?: {
   includeDrafts?: boolean;
   category?: string;
   query?: string;
+  locale?: string;
 }) {
   const source = await fromSupabase(async () => {
     const remote = await fetchRemoteArticles(Boolean(options?.includeDrafts));
     return remote ?? (await readStore()).articles;
   }, async () => (await readStore()).articles);
-  let articles = publishedOnly(source, Boolean(options?.includeDrafts));
+  let articles = publishedOnly(source, Boolean(options?.includeDrafts)).map(withArticleImages);
+  const needsCategories =
+    (options?.category && options.category !== "all") || Boolean(options?.query?.trim());
+  const categories = needsCategories ? await getCategories("article") : [];
   if (options?.category && options.category !== "all") {
-    const categories = await getCategories("article");
     const match = categories.find((item) => item.slug === options.category);
     if (match) articles = articles.filter((item) => item.categoryId === match.id);
   }
-  if (options?.query) {
-    const q = options.query.toLowerCase();
-    articles = articles.filter((item) =>
-      [item.title.en, item.title.ar, item.excerpt.en, item.excerpt.ar]
-        .join(" ")
-        .toLowerCase()
-        .includes(q),
-    );
+  const query = options?.query?.trim().toLowerCase();
+  if (query) {
+    articles = articles.filter((item) => {
+      const category = categories.find((entry) => entry.id === item.categoryId);
+      const categoryName = category
+        ? options?.locale === "ar"
+          ? category.name.ar
+          : options?.locale === "en"
+            ? category.name.en
+            : `${category.name.en} ${category.name.ar}`
+        : "";
+      return articleSearchHaystack(item, options?.locale, categoryName).includes(query);
+    });
   }
   return [...articles].sort((a, b) =>
     (b.publishedAt || b.createdAt).localeCompare(a.publishedAt || a.createdAt),
@@ -259,7 +351,7 @@ export async function getArticleById(id: string) {
     const remote = await fetchRemoteArticles(true);
     return remote ?? (await readStore()).articles;
   }, async () => (await readStore()).articles);
-  return articles.find((item) => item.id === id) || null;
+  return articles.map(withArticleImages).find((item) => item.id === id) || null;
 }
 
 export async function saveArticle(input: ArticleInput, id?: string) {
@@ -281,6 +373,8 @@ export async function saveArticle(input: ArticleInput, id?: string) {
         ...current,
         ...input,
         id,
+        images: normalizeGalleryImages(input.images || current.images, input.featuredImageUrl),
+        featuredImageUrl: featuredImageUrlFrom(input.images || current.images, input.featuredImageUrl),
         createdAt: current.createdAt,
         updatedAt: timestamp,
         publishedAt: input.publishedAt,
@@ -291,6 +385,8 @@ export async function saveArticle(input: ArticleInput, id?: string) {
       saved = {
         ...input,
         id: newId("art"),
+        images: normalizeGalleryImages(input.images, input.featuredImageUrl),
+        featuredImageUrl: featuredImageUrlFrom(input.images, input.featuredImageUrl),
         createdAt: timestamp,
         updatedAt: timestamp,
         publishedAt: input.publishedAt || (input.isPublished ? timestamp : null),
@@ -304,6 +400,12 @@ export async function saveArticle(input: ArticleInput, id?: string) {
 }
 
 export async function deleteArticle(id: string) {
+  const article = await getArticleById(id);
+  const urls = [
+    article?.featuredImageUrl,
+    ...(article?.images || []).map((image) => image.url),
+  ].filter((url, index, list) => url && list.indexOf(url) === index) as string[];
+  await Promise.all(urls.map((url) => deleteUpload(url)));
   await mutateStore((store) => {
     store.articles = store.articles.filter((item) => item.id !== id);
   });
@@ -311,31 +413,55 @@ export async function deleteArticle(id: string) {
   refreshPublic();
 }
 
+function documentSearchHaystack(item: DocumentItem, locale?: string, categoryName = "") {
+  const files = documentAttachments(item);
+  const localizedFields =
+    locale === "ar"
+      ? [item.title.ar, item.description.ar]
+      : locale === "en"
+        ? [item.title.en, item.description.en]
+        : [item.title.en, item.title.ar, item.description.en, item.description.ar];
+  return searchableText([...localizedFields, categoryName, ...files.map((file) => file.fileName)].join(" "));
+}
+
 export async function getDocuments(options?: {
   includeDrafts?: boolean;
   category?: string;
   query?: string;
+  locale?: string;
 }) {
   const source = await fromSupabase(async () => {
     const remote = await fetchRemoteDocuments(Boolean(options?.includeDrafts));
     return remote ?? (await readStore()).documents;
   }, async () => (await readStore()).documents);
-  let documents = publishedOnly(source, Boolean(options?.includeDrafts));
+  let documents = publishedOnly(source, Boolean(options?.includeDrafts)).map(normalizeDocument);
+  const needsCategories =
+    (options?.category && options.category !== "all") || Boolean(options?.query?.trim());
+  const categories = needsCategories ? await getCategories("document") : [];
   if (options?.category && options.category !== "all") {
-    const categories = await getCategories("document");
     const match = categories.find((item) => item.slug === options.category);
     if (match) documents = documents.filter((item) => item.categoryId === match.id);
   }
-  if (options?.query) {
-    const q = options.query.toLowerCase();
-    documents = documents.filter((item) =>
-      [item.title.en, item.title.ar, item.description.en, item.description.ar]
-        .join(" ")
-        .toLowerCase()
-        .includes(q),
-    );
+  const query = options?.query?.trim().toLowerCase();
+  if (query) {
+    documents = documents.filter((item) => {
+      const category = categories.find((entry) => entry.id === item.categoryId);
+      const categoryName = category
+        ? options?.locale === "ar"
+          ? category.name.ar
+          : options?.locale === "en"
+            ? category.name.en
+            : `${category.name.en} ${category.name.ar}`
+        : "";
+      return documentSearchHaystack(item, options?.locale, categoryName).includes(query);
+    });
   }
   return [...documents].sort((a, b) => a.displayOrder - b.displayOrder);
+}
+
+export async function getDocumentBySlug(slug: string, includeDrafts = false) {
+  const documents = await getDocuments({ includeDrafts });
+  return documents.find((item) => item.slug === slug) || null;
 }
 
 export async function getDocumentById(id: string) {
@@ -343,33 +469,64 @@ export async function getDocumentById(id: string) {
     const remote = await fetchRemoteDocuments(true);
     return remote ?? (await readStore()).documents;
   }, async () => (await readStore()).documents);
-  return documents.find((item) => item.id === id) || null;
+  return documents.map(normalizeDocument).find((item) => item.id === id) || null;
 }
 
 export async function saveDocument(input: DocumentInput, id?: string) {
   let saved: DocumentItem | null = null;
+  const files = documentAttachments(input);
+  const first = files[0];
+  const payload: DocumentInput = {
+    ...input,
+    files,
+    fileUrl: first?.url || "",
+    fileName: first?.fileName || "",
+    fileType: first?.fileType || "",
+    fileSize: first?.fileSize || 0,
+    hasExpiry: Boolean(input.hasExpiry),
+    expiresAt: input.hasExpiry ? input.expiresAt : null,
+  };
+
+  const current = id ? await getDocumentById(id) : null;
+  if (current) {
+    const keep = new Set(files.map((item) => item.url));
+    const stale = [
+      current.thumbnailUrl,
+      ...documentAttachments(current).map((item) => item.url),
+    ].filter((url) => url && !keep.has(url) && url !== payload.thumbnailUrl);
+    await Promise.all(stale.map((url) => deleteUpload(url)));
+  }
+
   await mutateStore((store) => {
     const timestamp = nowIso();
     if (id) {
       const index = store.documents.findIndex((item) => item.id === id);
-      if (index === -1) throw new Error("Document not found");
+      const existing = index === -1
+        ? {
+            ...payload,
+            id,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            publishedAt: payload.isPublished ? timestamp : null,
+          }
+        : store.documents[index];
       saved = {
-        ...store.documents[index],
-        ...input,
+        ...existing,
+        ...payload,
         id,
+        createdAt: existing.createdAt,
         updatedAt: timestamp,
-        publishedAt: input.isPublished
-          ? store.documents[index].publishedAt || timestamp
-          : null,
+        publishedAt: payload.isPublished ? existing.publishedAt || timestamp : null,
       };
-      store.documents[index] = saved;
+      if (index === -1) store.documents.push(saved);
+      else store.documents[index] = saved;
     } else {
       saved = {
-        ...input,
+        ...payload,
         id: newId("doc"),
         createdAt: timestamp,
         updatedAt: timestamp,
-        publishedAt: input.isPublished ? timestamp : null,
+        publishedAt: payload.isPublished ? timestamp : null,
       };
       store.documents.push(saved);
     }
@@ -380,11 +537,30 @@ export async function saveDocument(input: DocumentInput, id?: string) {
 }
 
 export async function deleteDocument(id: string) {
+  const document = await getDocumentById(id);
+  if (document) {
+    const urls = [
+      document.thumbnailUrl,
+      ...documentAttachments(document).map((item) => item.url),
+    ].filter((url, index, list) => url && list.indexOf(url) === index);
+    await Promise.all(urls.map((url) => deleteUpload(url)));
+  }
   await mutateStore((store) => {
     store.documents = store.documents.filter((item) => item.id !== id);
   });
   await deleteRemoteDocument(id);
   refreshPublic();
+}
+
+export async function getExpiringDocuments() {
+  const documents = await getDocuments({ includeDrafts: true });
+  return documents
+    .flatMap((document) => {
+      const expiry = documentExpiry(document.hasExpiry, document.expiresAt);
+      if (!expiry || expiry.status === "ok") return [];
+      return [{ document, expiry }];
+    })
+    .sort((a, b) => a.expiry.days - b.expiry.days);
 }
 
 export async function getTestimonials(): Promise<Testimonial[]> {

@@ -18,8 +18,10 @@ export async function Footer({
     <footer className="container-wide py-16">
       <div className="flex flex-col gap-12 border-t border-border pt-16 lg:flex-row lg:justify-between">
         <div>
-          <Logo />
-          <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">{t("blurb")}</p>
+          <Logo name={name} />
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
+            {locale === "ar" ? settings.tagline.ar : settings.tagline.en}
+          </p>
         </div>
         <div className="grid gap-10 sm:grid-cols-3 sm:gap-16">
           <div>
@@ -44,14 +46,22 @@ export async function Footer({
             <p className="mb-3 text-sm font-semibold">{t("getInTouch")}</p>
             <ul className="space-y-2 text-sm text-muted">
               <li><a href={`mailto:${settings.email}`} className="hover:text-foreground">{settings.email}</a></li>
-              <li><a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="hover:text-foreground">{settings.phone}</a></li>
+              <li>
+                <a
+                  href={`tel:${settings.phone.replace(/\s/g, "")}`}
+                  dir="ltr"
+                  className="inline-block hover:text-foreground"
+                >
+                  {settings.phone}
+                </a>
+              </li>
               <li>{locale === "ar" ? settings.hours.ar : settings.hours.en}</li>
             </ul>
           </div>
         </div>
       </div>
       <div className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-sm text-muted sm:flex-row sm:justify-between">
-        <p>{t("rights", { year })}</p>
+        <p>{t("rights", { year, company: name })}</p>
         <p>{locale === "ar" ? settings.address.ar : settings.address.en}</p>
         <span className="sr-only">{name}</span>
       </div>

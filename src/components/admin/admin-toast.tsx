@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { ADMIN_NOTICES, isAdminNotice } from "@/lib/admin-notice";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { isAdminNotice, type AdminNotice } from "@/lib/admin-notice";
 
 type Tone = "success" | "error";
 
@@ -11,35 +12,60 @@ type Toast = {
   tone: Tone;
 };
 
+export function isNextRedirect(err: unknown) {
+  if (!err || typeof err !== "object") return false;
+  const digest = "digest" in err ? String((err as { digest?: string }).digest || "") : "";
+  const message = err instanceof Error ? err.message : "";
+  return digest.includes("NEXT_REDIRECT") || message.includes("NEXT_REDIRECT");
+}
+
 export function pushAdminToast(message: string, tone: Tone = "success") {
   window.dispatchEvent(new CustomEvent("sip:toast", { detail: { message, tone } }));
 }
 
-export function reportAdminForm(form: HTMLFormElement) {
+export function reportAdminForm(
+  form: HTMLFormElement,
+  messages?: {
+    fieldRequired: (name: string) => string;
+    requiredFields: string;
+  },
+) {
   if (form.checkValidity()) return true;
   form.reportValidity();
   const field = form.querySelector(":invalid");
   const labeled = field?.closest("label, div")?.querySelector("span.font-medium, p.text-sm.font-medium");
   const name = labeled?.textContent?.replace(/\*/g, "").trim();
-  pushAdminToast(name ? `${name} is required.` : "Please fill in the required fields.", "error");
+  pushAdminToast(
+    name
+      ? messages?.fieldRequired(name) || `${name} is required.`
+      : messages?.requiredFields || "Please fill in the required fields.",
+    "error",
+  );
   return false;
 }
 
 export function AdminToast() {
+  const t = useTranslations("admin");
   const pathname = usePathname();
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [toast, setToast] = useState<Toast | null>(null);
   const [visible, setVisible] = useState(false);
+  const shownNotice = useRef("");
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const key = params.get("notice");
-    if (!isAdminNotice(key)) return;
-    setToast({ message: ADMIN_NOTICES[key], tone: "success" });
+    const key = searchParams.get("notice");
+    if (!isAdminNotice(key)) {
+      shownNotice.current = "";
+      return;
+    }
+    if (shownNotice.current === `${pathname}:${key}`) return;
+    shownNotice.current = `${pathname}:${key}`;
+    setToast({ message: t(`notice.${key as AdminNotice}`), tone: "success" });
+    const params = new URLSearchParams(searchParams.toString());
     params.delete("notice");
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router]);
+    window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
+  }, [pathname, searchParams, t]);
 
   useEffect(() => {
     function onEvent(event: Event) {
@@ -104,7 +130,7 @@ export function AdminToast() {
               setVisible(false);
               window.setTimeout(() => setToast(null), 200);
             }}
-            aria-label="Dismiss"
+            aria-label={t("dismiss")}
           >
             <svg viewBox="0 0 24 24" className="size-3.5" fill="none" aria-hidden>
               <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />

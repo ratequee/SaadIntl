@@ -16,14 +16,17 @@ export type Category = {
   name: Localized;
 };
 
-export type ProjectImage = {
-  id: string;
-  projectId: string;
+export type GalleryImage = {
   url: string;
   caption: Localized;
   alt: Localized;
   isFeatured: boolean;
   displayOrder: number;
+};
+
+export type ProjectImage = GalleryImage & {
+  id: string;
+  projectId: string;
 };
 
 export type Project = {
@@ -61,6 +64,7 @@ export type Article = {
   content: Localized;
   categoryId: string;
   featuredImageUrl: string;
+  images: GalleryImage[];
   author: Localized;
   readingTimeMinutes: number;
   isPublished: boolean;
@@ -69,6 +73,13 @@ export type Article = {
   seoDescription: Localized;
   createdAt: string;
   updatedAt: string;
+};
+
+export type DocumentFile = {
+  url: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
 };
 
 export type DocumentItem = {
@@ -82,6 +93,9 @@ export type DocumentItem = {
   fileType: string;
   fileSize: number;
   thumbnailUrl: string;
+  files: DocumentFile[];
+  hasExpiry: boolean;
+  expiresAt: string | null;
   isPublished: boolean;
   displayOrder: number;
   createdAt: string;

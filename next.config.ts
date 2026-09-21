@@ -16,6 +16,11 @@ function supabaseHostname() {
 const supabaseHost = supabaseHostname();
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "100mb",
+    },
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

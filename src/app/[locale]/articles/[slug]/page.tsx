@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MediaImage } from "@/components/ui/media-image";
+import { ProjectGallery } from "@/components/projects/project-gallery";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getAdminSession } from "@/lib/auth/session";
@@ -54,15 +54,18 @@ export default async function ArticleDetailPage({
         {formatDate(article.publishedAt, locale)} · {localized(article.author, locale)} ·{" "}
         {t("minRead", { minutes: article.readingTimeMinutes })}
       </p>
-      <MediaImage
-        src={article.featuredImageUrl}
-        alt={localized(article.title, locale)}
-        width={1400}
-        height={800}
-        sizes="(min-width: 1441px) 80vw, 100vw"
-        className="mt-8 h-[48vw] max-h-[520px] min-h-[240px] w-full rounded-[2rem] object-cover"
-        priority
-      />
+      <div className="mt-8">
+        <ProjectGallery
+          images={article.images.length ? article.images : [{
+            url: article.featuredImageUrl,
+            caption: { en: "", ar: "" },
+            alt: { en: localized(article.title, locale), ar: localized(article.title, locale) },
+            isFeatured: true,
+            displayOrder: 1,
+          }]}
+          locale={locale}
+        />
+      </div>
       <div
         className="prose-sip mt-10"
         dangerouslySetInnerHTML={{ __html: localized(article.content, locale) }}
