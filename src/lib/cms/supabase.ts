@@ -266,7 +266,7 @@ export function documentRow(doc: DocumentItem) {
 export async function fetchRemoteProjects(includeDrafts = false) {
   const supabase = remoteCms();
   if (!supabase) return null;
-  let query = supabase.from("projects").select("*").order("display_order");
+  let query = supabase.from("projects").select("*").order("created_at", { ascending: false });
   if (!includeDrafts) query = query.eq("is_published", true);
   const { data, error } = await query;
   if (error) throw error;
@@ -286,7 +286,7 @@ export async function fetchRemoteProjects(includeDrafts = false) {
 export async function fetchRemoteArticles(includeDrafts = false) {
   const supabase = remoteCms();
   if (!supabase) return null;
-  let query = supabase.from("articles").select("*").order("published_at", { ascending: false });
+  let query = supabase.from("articles").select("*").order("created_at", { ascending: false });
   if (!includeDrafts) query = query.eq("is_published", true);
   const { data, error } = await query;
   if (error) throw error;
@@ -296,7 +296,7 @@ export async function fetchRemoteArticles(includeDrafts = false) {
 export async function fetchRemoteDocuments(includeDrafts = false) {
   const supabase = remoteCms();
   if (!supabase) return null;
-  let query = supabase.from("documents").select("*").order("display_order");
+  let query = supabase.from("documents").select("*").order("created_at", { ascending: false });
   if (!includeDrafts) query = query.eq("is_published", true);
   const { data, error } = await query;
   if (error) throw error;

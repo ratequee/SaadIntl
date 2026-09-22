@@ -5,6 +5,7 @@ import { routing } from "@/i18n/routing";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { LocaleAttributes } from "@/components/locale-attributes";
+import { SiteToast } from "@/components/ui/site-toast";
 import { getSettings } from "@/lib/cms";
 import { localized } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <LocaleAttributes locale={locale} />
+      <SiteToast />
       <Header
         hours={localized(settings.hours, locale)}
         companyName={localized(settings.companyName, locale)}

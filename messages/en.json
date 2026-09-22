@@ -179,12 +179,18 @@
     "messagePlaceholder": "Location, size, timeline, budget range",
     "submit": "Send enquiry",
     "sending": "Sending…",
-    "note": "Your enquiry is stored securely. We reply from {email}.",
-    "success": "Thank you. We have received your enquiry.",
-    "error": "We could not send the enquiry. Please try again or email us directly.",
+    "note": "Your enquiry is emailed to {email}. We reply within one working day.",
+    "success": "Thank you. Your enquiry has been sent.",
+    "error": "We could not send the enquiry. Please try again or email Saad@rateq.qa.",
     "rateLimit": "Please wait before sending another enquiry.",
     "pageTitle": "Contact",
-    "pageLead": "Start a conversation about your next project in Qatar."
+    "pageLead": "Start a conversation about your next project in Qatar.",
+    "subjects": {
+      "general": "General contracting",
+      "designBuild": "Design & build",
+      "projectManagement": "Project management",
+      "interiorDesign": "Interior design"
+    }
   },
   "footer": {
     "blurb": "Project management, construction and interior design across Qatar.",

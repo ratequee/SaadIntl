@@ -316,7 +316,7 @@ export async function HomePage({
             </dl>
             <p className="mt-8 text-sm text-white/70">{localized(settings.address, locale)}</p>
           </div>
-          <ContactForm locale={locale} replyEmail={settings.email} />
+          <ContactForm locale={locale} replyEmail="Saad@rateq.qa" />
         </div>
       </section>
     </>

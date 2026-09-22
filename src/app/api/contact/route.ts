@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { addContactMessage } from "@/lib/cms";
+import { sendContactEmail } from "@/lib/email/send-contact";
 import { contactSchema } from "@/lib/validations";
 
 const windowMs = 60 * 60 * 1000;
@@ -29,10 +30,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
-  await addContactMessage({
+  const payload = {
     ...parsed.data,
     locale: typeof body?.locale === "string" ? body.locale : "en",
-  });
+  };
+
+  try {
+    await sendContactEmail(payload);
+  } catch (error) {
+    console.error("Contact email failed", error);
+    return NextResponse.json({ error: "email" }, { status: 502 });
+  }
+
+  try {
+    await addContactMessage(payload);
+  } catch (error) {
+    console.error("Contact message store failed", error);
+  }
 
   return NextResponse.json({ ok: true });
 }

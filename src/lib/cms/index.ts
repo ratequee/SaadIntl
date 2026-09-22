@@ -191,7 +191,7 @@ export async function getProjects(options?: {
       return projectSearchHaystack(item, options?.locale, categoryName).includes(query);
     });
   }
-  return [...projects].sort((a, b) => a.displayOrder - b.displayOrder);
+  return [...projects].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 }
 
 export async function getProjectBySlug(slug: string, includeDrafts = false) {
@@ -336,9 +336,7 @@ export async function getArticles(options?: {
       return articleSearchHaystack(item, options?.locale, categoryName).includes(query);
     });
   }
-  return [...articles].sort((a, b) =>
-    (b.publishedAt || b.createdAt).localeCompare(a.publishedAt || a.createdAt),
-  );
+  return [...articles].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 }
 
 export async function getArticleBySlug(slug: string, includeDrafts = false) {
@@ -456,7 +454,7 @@ export async function getDocuments(options?: {
       return documentSearchHaystack(item, options?.locale, categoryName).includes(query);
     });
   }
-  return [...documents].sort((a, b) => a.displayOrder - b.displayOrder);
+  return [...documents].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 }
 
 export async function getDocumentBySlug(slug: string, includeDrafts = false) {
