@@ -40,9 +40,9 @@ Change these before any shared or production use.
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Local bootstrap admin |
 | `AUTH_SECRET` | Signs the admin session cookie |
 | `CONTACT_TO_EMAIL` | Inbox for contact form enquiries (`Saad@rateq.qa`) |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | SMTP used to deliver the contact email |
-| `CONTACT_FROM_EMAIL` | Optional From header for contact emails |
-| `RESEND_API_KEY` | Optional Resend fallback if SMTP is not set |
+| `RESEND_API_KEY` | Resend API key for contact form delivery |
+| `CONTACT_FROM_EMAIL` | From address on the verified `sipqa.com` domain |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | Optional SMTP fallback if Resend is not set |
 | `NEXT_PUBLIC_MAPS_EMBED_URL` | Optional contact map |
 
 Never expose the service role key or `AUTH_SECRET` to the browser.

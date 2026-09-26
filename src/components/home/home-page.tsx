@@ -40,7 +40,7 @@ export async function HomePage({
   return (
     <>
       <section className="container-wide pt-4">
-        <div className="relative overflow-hidden rounded-[2rem] bg-ink md:rounded-[2.5rem]">
+        <div className="relative isolate overflow-hidden rounded-[2rem] bg-ink md:rounded-[2.5rem]">
           <Image
             src="/images/hero.jpg"
             alt={t("about.imageAlt")}
@@ -49,15 +49,19 @@ export async function HomePage({
             quality={90}
             sizes="(min-width: 1441px) 80vw, 100vw"
             priority
-            className="h-[78vw] max-h-[760px] min-h-[540px] w-full object-cover object-[center_28%] md:h-[720px]"
+            className="absolute inset-0 h-full w-full object-cover object-[center_28%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" />
-          <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12 lg:p-16">
-            <div className="grid items-end gap-8 lg:grid-cols-[1fr_340px]">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/15" />
+          <div className="relative z-10 flex min-h-[32rem] flex-col justify-end p-5 sm:min-h-[38rem] sm:p-8 md:min-h-[540px] md:p-12 lg:min-h-[720px] lg:p-16">
+            <div className="grid items-end gap-6 md:gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
               <div className="max-w-3xl text-white">
-                <h1 className="display text-5xl md:text-7xl">{localized(settings.tagline, locale)}</h1>
-                <p className="mt-5 max-w-xl text-base text-white/85 md:text-lg">{localized(settings.about, locale)}</p>
-                <div className="mt-8 flex flex-wrap gap-3">
+                <h1 className="display text-[2.1rem] leading-[1.08] sm:text-4xl md:text-6xl lg:text-7xl">
+                  {localized(settings.tagline, locale)}
+                </h1>
+                <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base md:mt-5 md:text-lg">
+                  {localized(settings.about, locale)}
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3 md:mt-8">
                   <Link
                     href="/contact"
                     className={buttonClass(

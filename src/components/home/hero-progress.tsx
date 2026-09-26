@@ -91,7 +91,7 @@ export function HeroProgress({
   return (
     <aside
       ref={ref}
-      className="rounded-[1.6rem] bg-white p-5 text-ink shadow-[var(--shadow)] dark:bg-surface dark:text-foreground"
+      className="rounded-[1.4rem] bg-white p-4 text-ink shadow-[var(--shadow)] sm:rounded-[1.6rem] sm:p-5 dark:bg-surface dark:text-foreground"
     >
       <p className="mb-4 text-sm font-semibold">{title}</p>
       <ul className="space-y-4">

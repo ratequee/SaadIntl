@@ -7,13 +7,17 @@ import {
   type ContactEmailPayload,
 } from "./contact-template";
 
+const DEFAULT_FROM = "SAAD International <noreply@sipqa.com>";
+
 function fromAddress() {
-  return (
-    process.env.CONTACT_FROM_EMAIL?.trim() ||
-    (process.env.SMTP_USER
-      ? `SAAD International <${process.env.SMTP_USER}>`
-      : `SAAD International <${CONTACT_TO_EMAIL}>`)
-  );
+  const configured = process.env.CONTACT_FROM_EMAIL?.trim();
+  if (configured && /<[^@\s>]+@[^@\s>]+\.[^@\s>]+>/.test(configured)) {
+    return configured;
+  }
+  if (configured && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(configured)) {
+    return `SAAD International <${configured}>`;
+  }
+  return DEFAULT_FROM;
 }
 
 async function sendWithResend(payload: ContactEmailPayload) {
@@ -69,7 +73,7 @@ async function sendWithSmtp(payload: ContactEmailPayload) {
 }
 
 export async function sendContactEmail(payload: ContactEmailPayload) {
-  if (await sendWithSmtp(payload)) return;
   if (await sendWithResend(payload)) return;
+  if (await sendWithSmtp(payload)) return;
   throw new Error("Email is not configured.");
 }

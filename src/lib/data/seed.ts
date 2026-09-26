@@ -16,7 +16,7 @@ export const seedStore: CmsStore = {
       en: "SAAD International Projects manages, builds and fits out homes and commercial spaces across Qatar.",
       ar: "تدير سعد الدولية للمشاريع وتبني وتجهّز المنازل والمساحات التجارية في أنحاء قطر.",
     },
-    email: "info@sipqa.com",
+    email: "saad@rateq.qa",
     phone: "+974 3377 4448",
     hours: {
       en: "Sat – Thu, 9:00 am – 6:00 pm",
