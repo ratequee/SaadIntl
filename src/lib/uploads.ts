@@ -18,7 +18,11 @@ export async function deleteUpload(url: string) {
     const key = decodeURIComponent(url.slice(publicIndex + publicMarker.length).split("?")[0]);
     const supabase = getSupabaseServer();
     if (supabase && key) {
-      await supabase.storage.from("media").remove([key]);
+      try {
+        await supabase.storage.from("media").remove([key]);
+      } catch (error) {
+        console.error("Supabase delete failed", error);
+      }
     }
     return;
   }
@@ -35,19 +39,28 @@ export async function saveUpload(file: File, folder: "images" | "documents") {
 
   const supabase = getSupabaseServer();
   if (isSupabaseConfigured() && supabase) {
-    const key = `${folder}/${filename}`;
-    const { error } = await supabase.storage.from("media").upload(key, bytes, {
-      contentType: file.type,
-      upsert: false,
-    });
-    if (!error) {
-      const { data } = supabase.storage.from("media").getPublicUrl(key);
-      return data.publicUrl;
+    try {
+      const key = `${folder}/${filename}`;
+      const { error } = await supabase.storage.from("media").upload(key, bytes, {
+        contentType: file.type,
+        upsert: false,
+      });
+      if (!error) {
+        const { data } = supabase.storage.from("media").getPublicUrl(key);
+        return data.publicUrl;
+      }
+    } catch (error) {
+      console.error("Supabase upload failed", error);
     }
   }
 
-  const destDir = path.join(LOCAL_DIR, folder);
-  await fs.mkdir(destDir, { recursive: true });
-  await fs.writeFile(path.join(destDir, filename), bytes);
-  return `/uploads/${folder}/${filename}`;
+  try {
+    const destDir = path.join(LOCAL_DIR, folder);
+    await fs.mkdir(destDir, { recursive: true });
+    await fs.writeFile(path.join(destDir, filename), bytes);
+    return `/uploads/${folder}/${filename}`;
+  } catch (error) {
+    console.error("Local upload failed", error);
+    return "";
+  }
 }

@@ -38,6 +38,23 @@ export function remoteCms() {
   return getSupabaseServer();
 }
 
+async function readSafely<T>(fn: () => Promise<T>): Promise<T | null> {
+  try {
+    return await fn();
+  } catch (error) {
+    console.error("Supabase read failed", error);
+    return null;
+  }
+}
+
+async function writeSafely(fn: () => Promise<void>) {
+  try {
+    await fn();
+  } catch (error) {
+    console.error("Supabase write failed", error);
+  }
+}
+
 function loc(en?: string | null, ar?: string | null) {
   return { en: en || "", ar: ar || "" };
 }
@@ -266,125 +283,149 @@ export function documentRow(doc: DocumentItem) {
 export async function fetchRemoteProjects(includeDrafts = false) {
   const supabase = remoteCms();
   if (!supabase) return null;
-  let query = supabase.from("projects").select("*").order("created_at", { ascending: false });
-  if (!includeDrafts) query = query.eq("is_published", true);
-  const { data, error } = await query;
-  if (error) throw error;
-  const { data: images, error: imageError } = await supabase
-    .from("project_images")
-    .select("*")
-    .order("display_order");
-  if (imageError) throw imageError;
-  const byProject = new Map<string, ProjectImage[]>();
-  for (const row of images || []) {
-    const image = mapImage(row);
-    byProject.set(image.projectId, [...(byProject.get(image.projectId) || []), image]);
-  }
-  return (data || []).map((row) => mapProject(row, byProject.get(String(row.id)) || []));
+  return readSafely(async () => {
+    let query = supabase.from("projects").select("*").order("created_at", { ascending: false });
+    if (!includeDrafts) query = query.eq("is_published", true);
+    const { data, error } = await query;
+    if (error) throw error;
+    const { data: images, error: imageError } = await supabase
+      .from("project_images")
+      .select("*")
+      .order("display_order");
+    if (imageError) throw imageError;
+    const byProject = new Map<string, ProjectImage[]>();
+    for (const row of images || []) {
+      const image = mapImage(row);
+      byProject.set(image.projectId, [...(byProject.get(image.projectId) || []), image]);
+    }
+    return (data || []).map((row) => mapProject(row, byProject.get(String(row.id)) || []));
+  });
 }
 
 export async function fetchRemoteArticles(includeDrafts = false) {
   const supabase = remoteCms();
   if (!supabase) return null;
-  let query = supabase.from("articles").select("*").order("created_at", { ascending: false });
-  if (!includeDrafts) query = query.eq("is_published", true);
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data || []).map(mapArticle);
+  return readSafely(async () => {
+    let query = supabase.from("articles").select("*").order("created_at", { ascending: false });
+    if (!includeDrafts) query = query.eq("is_published", true);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(mapArticle);
+  });
 }
 
 export async function fetchRemoteDocuments(includeDrafts = false) {
   const supabase = remoteCms();
   if (!supabase) return null;
-  let query = supabase.from("documents").select("*").order("created_at", { ascending: false });
-  if (!includeDrafts) query = query.eq("is_published", true);
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data || []).map(mapDocument);
+  return readSafely(async () => {
+    let query = supabase.from("documents").select("*").order("created_at", { ascending: false });
+    if (!includeDrafts) query = query.eq("is_published", true);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(mapDocument);
+  });
 }
 
 export async function fetchRemoteCategories() {
   const supabase = remoteCms();
   if (!supabase) return null;
-  const { data, error } = await supabase.from("categories").select("*");
-  if (error) throw error;
-  return (data || []).map(mapCategory);
+  return readSafely(async () => {
+    const { data, error } = await supabase.from("categories").select("*");
+    if (error) throw error;
+    return (data || []).map(mapCategory);
+  });
 }
 
 export async function fetchRemoteTestimonials() {
   const supabase = remoteCms();
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from("testimonials")
-    .select("*")
-    .eq("is_published", true)
-    .order("display_order");
-  if (error) throw error;
-  return (data || []).map(mapTestimonial);
+  return readSafely(async () => {
+    const { data, error } = await supabase
+      .from("testimonials")
+      .select("*")
+      .eq("is_published", true)
+      .order("display_order");
+    if (error) throw error;
+    return (data || []).map(mapTestimonial);
+  });
 }
 
 export async function fetchRemoteSettings() {
   const supabase = remoteCms();
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from("site_settings")
-    .select("*")
-    .eq("id", "default")
-    .maybeSingle();
-  if (error) throw error;
-  return data ? (data.payload as SiteSettings) : null;
+  return readSafely(async () => {
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("*")
+      .eq("id", "default")
+      .maybeSingle();
+    if (error) throw error;
+    return data ? (data.payload as SiteSettings) : null;
+  });
 }
 
 export async function upsertRemoteProject(project: Project) {
   const supabase = remoteCms();
   if (!supabase) return;
-  const { error } = await supabase.from("projects").upsert(projectRow(project));
-  if (error) throw error;
-  const { error: clearError } = await supabase
-    .from("project_images")
-    .delete()
-    .eq("project_id", project.id);
-  if (clearError) throw clearError;
-  if (project.images.length) {
-    const { error: imageError } = await supabase
+  await writeSafely(async () => {
+    const { error } = await supabase.from("projects").upsert(projectRow(project));
+    if (error) throw error;
+    const { error: clearError } = await supabase
       .from("project_images")
-      .insert(project.images.map(imageRow));
-    if (imageError) throw imageError;
-  }
+      .delete()
+      .eq("project_id", project.id);
+    if (clearError) throw clearError;
+    if (project.images.length) {
+      const { error: imageError } = await supabase
+        .from("project_images")
+        .insert(project.images.map(imageRow));
+      if (imageError) throw imageError;
+    }
+  });
 }
 
 export async function deleteRemoteProject(id: string) {
   const supabase = remoteCms();
   if (!supabase) return;
-  const { error } = await supabase.from("projects").delete().eq("id", id);
-  if (error) throw error;
+  await writeSafely(async () => {
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+    if (error) throw error;
+  });
 }
 
 export async function upsertRemoteArticle(article: Article) {
   const supabase = remoteCms();
   if (!supabase) return;
-  const { error } = await supabase.from("articles").upsert(articleRow(article));
-  if (error) throw error;
+  await writeSafely(async () => {
+    const { error } = await supabase.from("articles").upsert(articleRow(article));
+    if (error) throw error;
+  });
 }
 
 export async function deleteRemoteArticle(id: string) {
   const supabase = remoteCms();
   if (!supabase) return;
-  const { error } = await supabase.from("articles").delete().eq("id", id);
-  if (error) throw error;
+  await writeSafely(async () => {
+    const { error } = await supabase.from("articles").delete().eq("id", id);
+    if (error) throw error;
+  });
 }
 
 export async function upsertRemoteDocument(doc: DocumentItem) {
   const supabase = remoteCms();
   if (!supabase) return;
-  const { error } = await supabase.from("documents").upsert(documentRow(doc));
-  if (error) throw error;
+  await writeSafely(async () => {
+    const { error } = await supabase.from("documents").upsert(documentRow(doc));
+    if (error) throw error;
+  });
 }
 
 export async function deleteRemoteDocument(id: string) {
   const supabase = remoteCms();
   if (!supabase) return;
-  const { error } = await supabase.from("documents").delete().eq("id", id);
-  if (error) throw error;
+  await writeSafely(async () => {
+    const { error } = await supabase.from("documents").delete().eq("id", id);
+    if (error) throw error;
+  });
 }
 

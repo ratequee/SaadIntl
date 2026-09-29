@@ -20,10 +20,14 @@ export async function loginAction(_: { error?: string } | null, formData: FormDa
   let ok = verifyLocalAdmin(email, password);
 
   if (!ok && isSupabaseConfigured()) {
-    const supabase = getSupabaseServer();
-    if (supabase) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      ok = !error;
+    try {
+      const supabase = getSupabaseServer();
+      if (supabase) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        ok = !error;
+      }
+    } catch (error) {
+      console.error("Supabase auth failed", error);
     }
   }
 

@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { seedStore } from "@/lib/data/seed";
 import { mutateStore, readStore } from "./file-store";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isSupabaseConfigured, isSupabaseUnavailable } from "@/lib/supabase/config";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { deleteUpload } from "@/lib/uploads";
 import {
@@ -93,9 +93,15 @@ async function fromSupabase<T>(fn: () => Promise<T>, fallback: () => Promise<T>)
   if (!isSupabaseConfigured()) return fallback();
   try {
     return await fn();
-  } catch {
+  } catch (error) {
+    console.error("Supabase unavailable", error);
     return fallback();
   }
+}
+
+async function localList<T>(read: (store: Awaited<ReturnType<typeof readStore>>) => T[]) {
+  if (isSupabaseConfigured()) return [] as T[];
+  return read(await readStore());
 }
 
 export async function getSettings(): Promise<SiteSettings> {
@@ -105,18 +111,31 @@ export async function getSettings(): Promise<SiteSettings> {
   }, async () => (await readStore()).settings);
 }
 
+function isMissingRelation(error: { code?: string; message?: string } | null) {
+  return (
+    error?.code === "PGRST205" ||
+    Boolean(error?.message?.includes("Could not find the table") || error?.message?.includes("does not exist"))
+  );
+}
+
 export async function updateSettings(settings: SiteSettings) {
   await mutateStore((store) => {
     store.settings = settings;
   });
   const supabase = getSupabaseServer();
   if (supabase) {
-    const { error } = await supabase.from("site_settings").upsert({
-      id: "default",
-      payload: settings,
-      updated_at: nowIso(),
-    });
-    if (error) throw error;
+    try {
+      const { error } = await supabase.from("site_settings").upsert({
+        id: "default",
+        payload: settings,
+        updated_at: nowIso(),
+      });
+      if (error && !isMissingRelation(error) && !isSupabaseUnavailable(error)) {
+        console.error("Supabase settings write failed", error);
+      }
+    } catch (error) {
+      console.error("Supabase settings write failed", error);
+    }
   }
   refreshPublic();
 }
@@ -124,9 +143,8 @@ export async function updateSettings(settings: SiteSettings) {
 export async function getCategories(type?: Category["type"]) {
   const categories = await fromSupabase(async () => {
     const remote = await fetchRemoteCategories();
-    if (remote && remote.length) return remote;
-    return (await readStore()).categories;
-  }, async () => (await readStore()).categories);
+    return remote ?? [];
+  }, () => localList((store) => store.categories));
   return type ? categories.filter((item) => item.type === type) : categories;
 }
 
@@ -163,8 +181,8 @@ export async function getProjects(options?: {
 }) {
   const source = await fromSupabase(async () => {
     const remote = await fetchRemoteProjects(Boolean(options?.includeDrafts));
-    return remote ?? (await readStore()).projects;
-  }, async () => (await readStore()).projects);
+    return remote ?? [];
+  }, () => localList((store) => store.projects));
   let projects = publishedOnly(source, Boolean(options?.includeDrafts)).map(withProjectFeatured);
   if (options?.featured) projects = projects.filter((item) => item.isFeatured);
   const needsCategories =
@@ -202,8 +220,8 @@ export async function getProjectBySlug(slug: string, includeDrafts = false) {
 export async function getProjectById(id: string) {
   const projects = await fromSupabase(async () => {
     const remote = await fetchRemoteProjects(true);
-    return remote ?? (await readStore()).projects;
-  }, async () => (await readStore()).projects);
+    return remote ?? [];
+  }, () => localList((store) => store.projects));
   return projects.map(withProjectFeatured).find((item) => item.id === id) || null;
 }
 
@@ -312,8 +330,8 @@ export async function getArticles(options?: {
 }) {
   const source = await fromSupabase(async () => {
     const remote = await fetchRemoteArticles(Boolean(options?.includeDrafts));
-    return remote ?? (await readStore()).articles;
-  }, async () => (await readStore()).articles);
+    return remote ?? [];
+  }, () => localList((store) => store.articles));
   let articles = publishedOnly(source, Boolean(options?.includeDrafts)).map(withArticleImages);
   const needsCategories =
     (options?.category && options.category !== "all") || Boolean(options?.query?.trim());
@@ -347,8 +365,8 @@ export async function getArticleBySlug(slug: string, includeDrafts = false) {
 export async function getArticleById(id: string) {
   const articles = await fromSupabase(async () => {
     const remote = await fetchRemoteArticles(true);
-    return remote ?? (await readStore()).articles;
-  }, async () => (await readStore()).articles);
+    return remote ?? [];
+  }, () => localList((store) => store.articles));
   return articles.map(withArticleImages).find((item) => item.id === id) || null;
 }
 
@@ -430,8 +448,8 @@ export async function getDocuments(options?: {
 }) {
   const source = await fromSupabase(async () => {
     const remote = await fetchRemoteDocuments(Boolean(options?.includeDrafts));
-    return remote ?? (await readStore()).documents;
-  }, async () => (await readStore()).documents);
+    return remote ?? [];
+  }, () => localList((store) => store.documents));
   let documents = publishedOnly(source, Boolean(options?.includeDrafts)).map(normalizeDocument);
   const needsCategories =
     (options?.category && options.category !== "all") || Boolean(options?.query?.trim());
@@ -465,8 +483,8 @@ export async function getDocumentBySlug(slug: string, includeDrafts = false) {
 export async function getDocumentById(id: string) {
   const documents = await fromSupabase(async () => {
     const remote = await fetchRemoteDocuments(true);
-    return remote ?? (await readStore()).documents;
-  }, async () => (await readStore()).documents);
+    return remote ?? [];
+  }, () => localList((store) => store.documents));
   return documents.map(normalizeDocument).find((item) => item.id === id) || null;
 }
 
@@ -564,14 +582,13 @@ export async function getExpiringDocuments() {
 export async function getTestimonials(): Promise<Testimonial[]> {
   return fromSupabase(async () => {
     const remote = await fetchRemoteTestimonials();
-    if (remote && remote.length) return remote;
-    return (await readStore()).testimonials
-      .filter((item) => item.isPublished)
-      .sort((a, b) => a.displayOrder - b.displayOrder);
-  }, async () =>
-    (await readStore()).testimonials
-      .filter((item) => item.isPublished)
-      .sort((a, b) => a.displayOrder - b.displayOrder),
+    return remote ?? [];
+  }, () =>
+    localList((store) =>
+      store.testimonials
+        .filter((item) => item.isPublished)
+        .sort((a, b) => a.displayOrder - b.displayOrder),
+    ),
   );
 }
 
@@ -588,16 +605,20 @@ export async function addContactMessage(
   });
   const supabase = getSupabaseServer();
   if (supabase) {
-    await supabase.from("contact_messages").insert({
-      id: message.id,
-      name: message.name,
-      email: message.email,
-      phone: message.phone,
-      subject: message.subject,
-      message: message.message,
-      locale: message.locale,
-      created_at: message.createdAt,
-    });
+    try {
+      await supabase.from("contact_messages").insert({
+        id: message.id,
+        name: message.name,
+        email: message.email,
+        phone: message.phone,
+        subject: message.subject,
+        message: message.message,
+        locale: message.locale,
+        created_at: message.createdAt,
+      });
+    } catch (error) {
+      console.error("Supabase contact message store failed", error);
+    }
   }
   return message;
 }
