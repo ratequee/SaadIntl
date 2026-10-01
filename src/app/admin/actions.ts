@@ -54,7 +54,6 @@ export async function upsertProjectAction(formData: FormData) {
     "startDate",
     "completionDate",
     "progress",
-    "displayOrder",
     "services",
     "contractValue",
     "excerpt_en",
@@ -92,7 +91,7 @@ export async function upsertProjectAction(formData: FormData) {
     progress: text(formData, "progress") ? Number(text(formData, "progress")) : null,
     isPublished: bool(formData, "isPublished"),
     isFeatured: bool(formData, "isFeatured"),
-    displayOrder: Number(text(formData, "displayOrder") || 99),
+    displayOrder: 0,
     seoTitle: { en: text(formData, "seo_title_en"), ar: text(formData, "seo_title_ar") },
     seoDescription: { en: text(formData, "seo_description_en"), ar: text(formData, "seo_description_ar") },
     publishedAt: bool(formData, "isPublished") ? new Date().toISOString() : null,
@@ -170,7 +169,7 @@ export async function upsertDocumentAction(formData: FormData) {
     hasExpiry,
     expiresAt: hasExpiry && expires ? expires.toISOString() : null,
     isPublished: bool(formData, "isPublished"),
-    displayOrder: Number(text(formData, "displayOrder") || 99),
+    displayOrder: 0,
     publishedAt: bool(formData, "isPublished") ? new Date().toISOString() : null,
   };
   await saveDocument(payload, id);

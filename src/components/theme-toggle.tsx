@@ -5,20 +5,28 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
-export function ThemeToggle({ className }: { className?: string }) {
+export function ThemeToggle({
+  className,
+  tone = "default",
+}: {
+  className?: string;
+  tone?: "default" | "ink";
+}) {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const t = useTranslations("theme");
+  const ink = tone === "ink";
+  const buttonClass = cn(
+    "grid size-9 place-items-center rounded-full",
+    ink ? "text-cream hover:bg-white/10" : "text-foreground hover:bg-surface",
+    className,
+  );
 
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
     return (
-      <button
-        type="button"
-        className={cn("grid size-9 place-items-center rounded-full text-foreground hover:bg-surface", className)}
-        aria-label={t("system")}
-      >
+      <button type="button" className={buttonClass} aria-label={t("system")}>
         <span className="size-4" />
       </button>
     );
@@ -30,7 +38,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className={cn("grid size-9 place-items-center rounded-full text-foreground hover:bg-surface", className)}
+      className={buttonClass}
       aria-label={isDark ? t("light") : t("dark")}
     >
       {isDark ? (

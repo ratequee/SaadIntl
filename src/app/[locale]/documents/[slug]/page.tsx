@@ -59,13 +59,13 @@ export default async function DocumentDetailPage({
               <a
                 href={file.url}
                 download
-                className="inline-flex w-full max-w-xl items-center justify-between gap-3 rounded-2xl bg-cream px-5 py-4 text-sm dark:bg-surface"
+                className="flex w-full max-w-xl flex-col gap-3 rounded-2xl bg-cream px-5 py-4 text-sm sm:flex-row sm:items-center sm:justify-between dark:bg-surface"
               >
                 <span className="min-w-0">
-                  <span className="block truncate font-medium">{file.fileName || t("pdf")}</span>
+                  <span className="block break-words font-medium">{file.fileName || t("pdf")}</span>
                   <span className="mt-1 block text-xs text-muted">{formatFileSize(file.fileSize, locale)}</span>
                 </span>
-                <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-ink px-4 py-2 text-cream hover:bg-gold hover:text-espresso dark:bg-cream dark:text-ink dark:hover:bg-gold dark:hover:text-espresso">
+                <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full bg-ink px-4 py-2 text-cream hover:bg-gold hover:text-espresso dark:bg-cream dark:text-ink dark:hover:bg-gold dark:hover:text-espresso">
                   {t("download")}
                   <IconDownload />
                 </span>

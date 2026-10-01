@@ -59,13 +59,7 @@ export function AdminSwitchers({
           AR
         </button>
       </div>
-      <ThemeToggle
-        className={
-          onInk
-            ? "text-cream hover:bg-white/10"
-            : undefined
-        }
-      />
+      <ThemeToggle tone={onInk ? "ink" : "default"} />
     </div>
   );
 }

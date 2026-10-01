@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { buttonClass, goldHoverClass } from "@/components/ui/button";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/lib/types";
 
@@ -74,17 +75,20 @@ export function ProjectFilters({
             {t("searchAction")}
           </button>
         </form>
-        <select
+        <SelectDropdown
+          label={t("status")}
           value={status}
-          onChange={(event) => update({ status: event.target.value })}
-          className="rounded-full border border-border bg-background px-4 py-2 text-sm"
-          aria-label={t("status")}
-        >
-          <option value="all">{t("status")}</option>
-          <option value="planning">{t("planning")}</option>
-          <option value="in_progress">{t("in_progress")}</option>
-          <option value="completed">{t("completed")}</option>
-        </select>
+          onChange={(next) => update({ status: next })}
+          className="w-auto shrink-0"
+          triggerClassName="min-w-[11.5rem] rounded-full border border-border bg-background px-4 py-2 text-sm"
+          menuClassName="overflow-hidden rounded-2xl border border-border bg-background shadow-[var(--shadow)]"
+          options={[
+            { value: "all", label: t("status") },
+            { value: "planning", label: t("planning") },
+            { value: "in_progress", label: t("in_progress") },
+            { value: "completed", label: t("completed") },
+          ]}
+        />
       </div>
     </div>
   );

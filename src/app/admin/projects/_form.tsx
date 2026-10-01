@@ -7,6 +7,7 @@ import { Field } from "@/components/admin/field";
 import { GalleryField, type GalleryItem } from "@/components/admin/gallery-field";
 import { TitleSlugFields } from "@/components/admin/title-slug-fields";
 import { buttonClass, goldHoverClass } from "@/components/ui/button";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { pushAdminToast, reportAdminForm } from "@/components/admin/admin-toast";
 import { localized } from "@/lib/utils";
 import type { Category, Project } from "@/lib/types";
@@ -120,19 +121,19 @@ export function ProjectForm({
             {t("category")}
             <span className="text-gold"> *</span>
           </span>
-          <select
+          <SelectDropdown
             name="categoryId"
-            defaultValue={project?.categoryId}
+            label={t("category")}
             required
-            className="rounded-full border border-border px-4 py-3"
-          >
-            <option value="">{t("selectCategory")}</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {localized(category.name, locale)}
-              </option>
-            ))}
-          </select>
+            placeholder={t("selectCategory")}
+            defaultValue={project?.categoryId || ""}
+            triggerClassName="rounded-full border border-border bg-background px-4 py-3 text-sm"
+            menuClassName="overflow-hidden rounded-2xl border border-border bg-background shadow-[var(--shadow)]"
+            options={categories.map((category) => ({
+              value: category.id,
+              label: localized(category.name, locale),
+            }))}
+          />
         </label>
         <Field label={t("locationEn")} name="location_en" defaultValue={project?.location.en} dir="ltr" required />
         <Field label={t("locationAr")} name="location_ar" defaultValue={project?.location.ar} dir="rtl" required />
@@ -142,21 +143,23 @@ export function ProjectForm({
             {t("status")}
             <span className="text-gold"> *</span>
           </span>
-          <select
+          <SelectDropdown
             name="status"
-            defaultValue={project?.status || "planning"}
+            label={t("status")}
             required
-            className="rounded-full border border-border px-4 py-3"
-          >
-            <option value="planning">{t("planning")}</option>
-            <option value="in_progress">{t("inProgress")}</option>
-            <option value="completed">{t("completed")}</option>
-          </select>
+            defaultValue={project?.status || "planning"}
+            triggerClassName="rounded-full border border-border bg-background px-4 py-3 text-sm"
+            menuClassName="overflow-hidden rounded-2xl border border-border bg-background shadow-[var(--shadow)]"
+            options={[
+              { value: "planning", label: t("planning") },
+              { value: "in_progress", label: t("inProgress") },
+              { value: "completed", label: t("completed") },
+            ]}
+          />
         </label>
         <Field label={t("startDate")} name="startDate" type="date" defaultValue={project?.startDate || ""} required />
         <Field label={t("completionDate")} name="completionDate" type="date" defaultValue={project?.completionDate || ""} required />
         <Field label={t("progress")} name="progress" type="number" defaultValue={project?.progress ?? ""} required min={0} max={100} />
-        <Field label={t("displayOrder")} name="displayOrder" type="number" defaultValue={project?.displayOrder ?? 99} required />
         <Field label={t("services")} name="services" defaultValue={project?.services.join(", ")} required />
         <Field label={t("contractValue")} name="contractValue" defaultValue={project?.contractValue} required />
       </div>

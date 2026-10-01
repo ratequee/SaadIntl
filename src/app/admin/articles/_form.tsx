@@ -8,6 +8,7 @@ import { GalleryField, type GalleryItem } from "@/components/admin/gallery-field
 import { TitleSlugFields } from "@/components/admin/title-slug-fields";
 import { pushAdminToast, reportAdminForm } from "@/components/admin/admin-toast";
 import { buttonClass, goldHoverClass } from "@/components/ui/button";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { localized, toDateInput } from "@/lib/utils";
 import type { Article, Category } from "@/lib/types";
 
@@ -122,21 +123,19 @@ export function ArticleForm({
             {t("category")}
             <span className="text-gold"> *</span>
           </span>
-          <select
+          <SelectDropdown
             name="categoryId"
-            defaultValue={article?.categoryId || ""}
+            label={t("category")}
             required
-            className="rounded-full border border-border px-4 py-3"
-          >
-            <option value="" disabled>
-              {t("selectCategory")}
-            </option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {localized(category.name, locale)}
-              </option>
-            ))}
-          </select>
+            placeholder={t("selectCategory")}
+            defaultValue={article?.categoryId || ""}
+            triggerClassName="rounded-full border border-border bg-background px-4 py-3 text-sm"
+            menuClassName="overflow-hidden rounded-2xl border border-border bg-background shadow-[var(--shadow)]"
+            options={categories.map((category) => ({
+              value: category.id,
+              label: localized(category.name, locale),
+            }))}
+          />
         </label>
         <Field label={t("authorEn")} name="author_en" defaultValue={article?.author.en} dir="ltr" required />
         <Field label={t("authorAr")} name="author_ar" defaultValue={article?.author.ar} dir="rtl" required />

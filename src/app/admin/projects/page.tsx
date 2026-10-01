@@ -59,14 +59,13 @@ export default async function AdminProjectsPage({
               <th className="px-4 py-3 text-start font-medium">{t("title")}</th>
               <th className="px-4 py-3 text-start font-medium">{t("status")}</th>
               <th className="px-4 py-3 text-start font-medium">{t("visibility")}</th>
-              <th className="px-4 py-3 text-start font-medium">{t("order")}</th>
               <th className="px-4 py-3 text-start font-medium">{t("actions")}</th>
             </tr>
           </thead>
           <tbody>
             {projects.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-start text-muted">
+                <td colSpan={5} className="px-4 py-8 text-start text-muted">
                   {t("noProjectsSearch")}
                 </td>
               </tr>
@@ -100,7 +99,6 @@ export default async function AdminProjectsPage({
                     <td className="px-4 py-4 text-start align-top whitespace-nowrap">
                       {project.isPublished ? t("published") : t("draft")}
                     </td>
-                    <td className="px-4 py-4 text-start align-top whitespace-nowrap">{project.displayOrder}</td>
                     <td className="px-4 py-4 text-start align-top">
                       <div className="flex flex-wrap items-center gap-3 whitespace-nowrap">
                         <Link href={`/admin/projects/${project.id}`} className="text-gold">

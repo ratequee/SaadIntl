@@ -8,6 +8,7 @@ import { TitleSlugFields } from "@/components/admin/title-slug-fields";
 import { DocumentFilesField, type DocumentFileItem } from "@/components/admin/document-files-field";
 import { pushAdminToast, reportAdminForm } from "@/components/admin/admin-toast";
 import { buttonClass, goldHoverClass } from "@/components/ui/button";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { documentAttachments, localized, toDateInput } from "@/lib/utils";
 import type { Category, DocumentItem } from "@/lib/types";
 
@@ -109,29 +110,20 @@ export function DocumentForm({
             {t("category")}
             <span className="text-gold"> *</span>
           </span>
-          <select
+          <SelectDropdown
             name="categoryId"
-            defaultValue={document?.categoryId || ""}
+            label={t("category")}
             required
-            className="rounded-full border border-border px-4 py-3"
-          >
-            <option value="" disabled>
-              {t("selectCategory")}
-            </option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {localized(category.name, locale)}
-              </option>
-            ))}
-          </select>
+            placeholder={t("selectCategory")}
+            defaultValue={document?.categoryId || ""}
+            triggerClassName="rounded-full border border-border bg-background px-4 py-3 text-sm"
+            menuClassName="overflow-hidden rounded-2xl border border-border bg-background shadow-[var(--shadow)]"
+            options={categories.map((category) => ({
+              value: category.id,
+              label: localized(category.name, locale),
+            }))}
+          />
         </label>
-        <Field
-          label={t("displayOrder")}
-          name="displayOrder"
-          type="number"
-          defaultValue={document?.displayOrder ?? 99}
-          required
-        />
       </div>
       <Field
         label={t("descriptionEn")}
