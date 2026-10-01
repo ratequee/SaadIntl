@@ -74,7 +74,7 @@ export function SelectDropdown({
   }, [defaultValue]);
 
   return (
-    <div ref={rootRef} className={cn("relative w-full", open && "z-40", className)}>
+    <div ref={rootRef} className={cn("relative", open && "z-40", className)}>
       {name ? <input type="hidden" name={name} value={selectedValue} required={required} /> : null}
       <button
         type="button"
