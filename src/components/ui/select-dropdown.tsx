@@ -36,7 +36,9 @@ export function SelectDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const [uncontrolled, setUncontrolled] = useState(defaultValue);
+  const [placement, setPlacement] = useState<"bottom" | "top">("bottom");
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
   const selectedValue = controlled ?? uncontrolled;
   const selected = options.find((option) => option.value === selectedValue);
 
@@ -45,6 +47,29 @@ export function SelectDropdown({
     onChange?.(next);
     setOpen(false);
   }
+
+  useEffect(() => {
+    if (!open) return;
+    function place() {
+      const root = rootRef.current;
+      if (!root) return;
+      const rect = root.getBoundingClientRect();
+      const menuHeight = Math.min(menuRef.current?.offsetHeight || 256, 256);
+      const gap = 8;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      setPlacement(spaceBelow < menuHeight + gap && spaceAbove > spaceBelow ? "top" : "bottom");
+    }
+    place();
+    const frame = requestAnimationFrame(place);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, options.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -92,7 +117,7 @@ export function SelectDropdown({
         </span>
         <svg
           viewBox="0 0 16 16"
-          className={cn("size-3.5 shrink-0 opacity-60 transition-transform", open && "rotate-180")}
+          className={cn("size-3.5 shrink-0 opacity-60 transition-transform", open && placement === "bottom" && "rotate-180")}
           aria-hidden
         >
           <path fill="currentColor" d="M3.2 5.6 8 10.4l4.8-4.8 1.2 1.2L8 12.8 2 6.8z" />
@@ -100,9 +125,11 @@ export function SelectDropdown({
       </button>
       {open ? (
         <ul
+          ref={menuRef}
           role="listbox"
           className={cn(
-            "absolute inset-inline-start-0 top-[calc(100%+0.4rem)] z-50 max-h-64 min-w-full overflow-auto py-1",
+            "absolute inset-inline-start-0 z-50 max-h-64 min-w-full overflow-auto py-1",
+            placement === "top" ? "bottom-[calc(100%+0.4rem)]" : "top-[calc(100%+0.4rem)]",
             menuClassName,
           )}
         >

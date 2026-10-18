@@ -62,6 +62,20 @@ export async function Footer({
       </div>
       <div className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-sm text-muted sm:flex-row sm:justify-between">
         <p>{t("rights", { year, company: name })}</p>
+        <p>
+          {t.rich("broughtToLife", {
+            name: (chunks) => (
+              <a
+                href="https://qwebdigital.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline-offset-2 hover:text-gold hover:underline"
+              >
+                {chunks}
+              </a>
+            ),
+          })}
+        </p>
         <p>{locale === "ar" ? settings.address.ar : settings.address.en}</p>
         <span className="sr-only">{name}</span>
       </div>
